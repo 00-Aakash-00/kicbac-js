@@ -27,7 +27,8 @@ export type FormMachineAction =
   | { type: "COMPLETE" }
   | { type: "FAIL"; error: KicbacFormError }
   | { type: "RESET" }
-  | { type: "LOAD_ERROR"; error: Extract<KicbacFormError, { type: "load" }> };
+  | { type: "LOAD_ERROR"; error: Extract<KicbacFormError, { type: "load" }> }
+  | { type: "RECOVER" };
 
 export const initialFormState: FormMachineState = {
   status: "idle",
@@ -49,7 +50,12 @@ function untouched(state: KicbacFieldState): KicbacFieldState {
 export function formReducer(state: FormMachineState, action: FormMachineAction): FormMachineState {
   switch (action.type) {
     case "SESSION_CREATED":
-      return state.status === "idle" ? { ...state, status: "loading" } : state;
+      // Also recover from a fatal load error: a retry that successfully creates
+      // a session must clear the stale error and flow error → loading → ready.
+      return state.status === "idle" ||
+        (state.status === "error" && state.error?.type === "load")
+        ? { ...state, status: "loading", error: null }
+        : state;
 
     case "READY":
       return state.status === "idle" || state.status === "loading"
@@ -106,5 +112,13 @@ export function formReducer(state: FormMachineState, action: FormMachineAction):
 
     case "LOAD_ERROR":
       return { ...state, status: "error", error: action.error };
+
+    case "RECOVER":
+      // A transient load failure cleared (e.g. the provider re-attempted the
+      // script): drop the stale fatal error so the form can re-mount cleanly.
+      // No-op unless currently showing a fatal load error.
+      return state.status === "error" && state.error?.type === "load"
+        ? { ...state, status: "loading", error: null }
+        : state;
   }
 }

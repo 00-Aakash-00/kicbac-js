@@ -12,6 +12,7 @@ import {
   CardNumberField,
   PaymentFormContext,
 } from "./fields.jsx";
+import { KicbacStatusPanel } from "./status-panel.jsx";
 
 export interface KicbacPaymentFormProps {
   /** Amount as a decimal string, e.g. `"49.99"`. */
@@ -75,7 +76,7 @@ export function KicbacPaymentForm(props: KicbacPaymentFormProps): ReactNode {
     className,
   } = props;
 
-  const { appearance: providerAppearance } = useKicbacContext();
+  const { appearance: providerAppearance, isLoaded, loadError, reload } = useKicbacContext();
   const form = usePaymentForm({
     amount,
     currency,
@@ -99,12 +100,36 @@ export function KicbacPaymentForm(props: KicbacPaymentFormProps): ReactNode {
   const isLoading = form.status === "idle" || form.status === "loading";
   const isSuccess = form.status === "success";
 
+  // Fatal: the secure fields can never mount (missing/blocked key, failed
+  // script, session conflict). Show the branded fallback instead of empty
+  // field boxes + raw developer text. Derived from the provider (`loadError`
+  // before a client exists) and the form machine (errors thrown while creating
+  // the field session). `isLoaded` flips this off the moment a retry succeeds,
+  // so the field divs are committed before the session effect runs.
+  const loadFault = (loadError && !isLoaded ? loadError : null) ?? null;
+  const fatalError = form.error?.type === "load" ? form.error : null;
+  const fatalCode = loadFault?.code ?? fatalError?.code ?? null;
+  const fatalMessage = loadFault?.message ?? fatalError?.message;
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void form.submit();
   };
 
   const label = buttonLabel ?? defaultButtonLabel(amount, currency);
+
+  if (fatalCode !== null) {
+    return (
+      <div className={cx("kb-root", elements.root, className)} style={cssVars}>
+        <KicbacStatusPanel
+          code={fatalCode}
+          {...(fatalMessage !== undefined ? { devMessage: fatalMessage } : {})}
+          onRetry={reload}
+          elements={elements}
+        />
+      </div>
+    );
+  }
 
   return (
     <PaymentFormContext.Provider value={contextValue}>

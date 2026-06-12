@@ -12,6 +12,9 @@ export type {
 export { KicbacPaymentForm } from "./components/payment-form.jsx";
 export type { KicbacPaymentFormProps } from "./components/payment-form.jsx";
 
+export { KicbacStatusPanel } from "./components/status-panel.jsx";
+export type { KicbacStatusPanelProps } from "./components/status-panel.jsx";
+
 export {
   CardNumberField,
   CardExpiryField,

@@ -34,6 +34,14 @@
   font-size: var(--kb-font-size, 16px);
   line-height: 1.45;
   letter-spacing: -0.01em;
+  /*
+   * Query the form against ITS OWN width, not the viewport — the component is
+   * embeddable (narrow sidebars on desktop, full-bleed on phones), so layout
+   * must respond to the container, not the screen. Progressive enhancement:
+   * where unsupported, the base layout already fluid-shrinks to 100%.
+   */
+  container-type: inline-size;
+  container-name: kb-form;
 }
 
 /* ------------------------------------------------------------------ */
@@ -216,6 +224,138 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Fatal status panel (missing key, blocked/failed Collect.js script)  */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Replaces the input fields entirely so a shopper never sees empty boxes or
+ * developer error text. Lives on the same card surface as the form.
+ */
+.kb-status {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: calc(var(--kb-spacing, 4px) * 2);
+  padding: calc(var(--kb-spacing, 4px) * 2) 0;
+  animation: kb-status-in 280ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.kb-status__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: calc(var(--kb-spacing, 4px) * 1);
+  border-radius: 50%;
+  color: var(--kb-color-danger, #e5484d);
+  background: color-mix(in srgb, var(--kb-color-danger, #e5484d) 12%, var(--kb-color-surface, #ffffff));
+  animation: kb-status-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 80ms both;
+}
+
+.kb-status__icon :where(svg) {
+  width: 22px;
+  height: 22px;
+}
+
+.kb-status__title {
+  margin: 0;
+  font-size: 1.0625em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--kb-color-text, #141442);
+}
+
+.kb-status__text {
+  margin: 0;
+  max-width: 32ch;
+  font-size: 0.875em;
+  line-height: 1.5;
+  color: var(--kb-color-muted, #757575);
+  overflow-wrap: break-word;
+}
+
+.kb-status__action {
+  box-sizing: border-box;
+  margin-top: calc(var(--kb-spacing, 4px) * 2);
+  min-height: 44px;
+  padding: calc(var(--kb-spacing, 4px) * 2.5) calc(var(--kb-spacing, 4px) * 5);
+  border: 1px solid color-mix(in srgb, var(--kb-color-primary, #f04ac4) 45%, transparent);
+  border-radius: var(--kb-radius, 10px);
+  background: transparent;
+  color: var(--kb-color-primary, #f04ac4);
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.kb-status__action:where(:hover) {
+  background: color-mix(in srgb, var(--kb-color-primary, #f04ac4) 10%, transparent);
+  border-color: var(--kb-color-primary, #f04ac4);
+}
+
+.kb-status__action:where(:active) {
+  transform: scale(0.97);
+}
+
+.kb-status__action:where(:focus-visible) {
+  outline: 2px solid var(--kb-color-primary, #f04ac4);
+  outline-offset: 2px;
+}
+
+.kb-status__dev {
+  margin: calc(var(--kb-spacing, 4px) * 2) 0 0;
+  max-width: 100%;
+  font-size: 0.75em;
+  line-height: 1.45;
+  color: var(--kb-color-muted, #757575);
+  word-break: break-word;
+}
+
+.kb-status__dev-label {
+  display: inline-block;
+  margin-right: 0.5em;
+  padding: 0.1em 0.5em;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--kb-color-muted, #757575) 14%, transparent);
+  font-size: 0.85em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive: adapt to the form's own width (container queries)       */
+/* ------------------------------------------------------------------ */
+
+@container kb-form (max-width: 360px) {
+  .kb-root {
+    /* Tighter padding so the card breathes on ~320px phones. Inputs stay 44px
+       and their iframe font stays 16px (set in @kicbac/js) to avoid iOS zoom. */
+    padding: calc(var(--kb-spacing, 4px) * 4);
+  }
+
+  .kb-field-group {
+    gap: calc(var(--kb-spacing, 4px) * 2.5);
+  }
+
+  .kb-status__text {
+    font-size: 0.8125em;
+  }
+
+  .kb-status__action {
+    width: 100%;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Keyframes                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -255,6 +395,28 @@
   to { transform: translateX(100%); }
 }
 
+@keyframes kb-status-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes kb-status-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Reduced motion: strip transforms, keep opacity/color fades          */
 /* ------------------------------------------------------------------ */
@@ -279,5 +441,18 @@
   .kb-button__check :where(path) {
     animation: none;
     stroke-dashoffset: 0;
+  }
+
+  /* Keep the panel's fade, drop the translate/scale and the icon's spring. */
+  .kb-status {
+    animation: kb-fade-in 180ms ease-out both;
+  }
+
+  .kb-status__icon {
+    animation: kb-fade-in 180ms ease-out both;
+  }
+
+  .kb-status__action:where(:active) {
+    transform: none;
   }
 }

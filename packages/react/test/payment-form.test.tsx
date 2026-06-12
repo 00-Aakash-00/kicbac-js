@@ -257,3 +257,107 @@ describe("unmount mid-tokenize", () => {
     expect(consoleError).not.toHaveBeenCalled();
   });
 });
+
+describe("fatal load failure: consumer-safe status panel", () => {
+  it("missing key shows the branded fallback, not empty field boxes or dev text", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NEXT_PUBLIC_KICBAC_TOKENIZATION_KEY", "");
+    const { container } = render(
+      <KicbacProvider>
+        <KicbacPaymentForm amount="49.99" />
+      </KicbacProvider>,
+    );
+
+    const panel = await screen.findByRole("alert");
+    expect(panel.classList.contains("kb-status")).toBe(true);
+    // No empty input boxes and no pay button — the broken form is gone.
+    expect(container.querySelectorAll(".kb-input")).toHaveLength(0);
+    expect(container.querySelector(".kb-button")).toBeNull();
+    // Consumer copy carries no developer wording.
+    const consumerText = panel.querySelector(".kb-status__text")?.textContent ?? "";
+    expect(consumerText).toMatch(/unavailable/i);
+    expect(consumerText).not.toMatch(/NEXT_PUBLIC|tokenization key|Collect\.js/i);
+    expect(panel.querySelector(".kb-status__title")?.textContent).toBeTruthy();
+    // A config error can't be fixed by the shopper → no retry button.
+    expect(screen.queryByRole("button", { name: /try again/i })).toBeNull();
+
+    vi.unstubAllEnvs();
+  });
+
+  it("exposes the real cause to developers (dev note + console.error), hidden in production", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NEXT_PUBLIC_KICBAC_TOKENIZATION_KEY", "");
+
+    // Development: dev note present, console.error called with the real code.
+    const dev = render(
+      <KicbacProvider>
+        <KicbacPaymentForm amount="49.99" />
+      </KicbacProvider>,
+    );
+    const devPanel = await screen.findByRole("alert");
+    expect(devPanel.querySelector(".kb-status__dev")?.textContent).toMatch(/missing_key/);
+    expect(consoleError).toHaveBeenCalledWith(expect.stringMatching(/missing_key/));
+    dev.unmount();
+
+    // Production: the dev note is stripped; the shopper sees no internals.
+    vi.stubEnv("NODE_ENV", "production");
+    const { container } = render(
+      <KicbacProvider>
+        <KicbacPaymentForm amount="49.99" />
+      </KicbacProvider>,
+    );
+    const prodPanel = await screen.findByRole("alert");
+    expect(prodPanel.querySelector(".kb-status__dev")).toBeNull();
+    expect(container.textContent).not.toMatch(/missing_key|NEXT_PUBLIC/);
+
+    vi.unstubAllEnvs();
+  });
+
+  it("a transient script failure offers a working Try again that recovers to live fields", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    // Start with no Collect.js global so the loader injects a script we can fail.
+    delete window.CollectJS;
+    resetKicbacForTests();
+
+    const { container } = render(
+      <KicbacProvider tokenizationKey={TEST_KEY}>
+        <KicbacPaymentForm amount="49.99" />
+      </KicbacProvider>,
+    );
+
+    const script1 = await waitFor(() => {
+      const el = document.querySelector("script[data-tokenization-key]");
+      if (!el) throw new Error("script not injected");
+      return el;
+    });
+    await act(async () => {
+      script1.dispatchEvent(new Event("error"));
+    });
+
+    // Transient failure → panel with a retry affordance, no empty boxes.
+    const retry = await screen.findByRole("button", { name: /try again/i });
+    expect(container.querySelectorAll(".kb-input")).toHaveLength(0);
+
+    // Retry → loader re-injects; make the second attempt succeed.
+    await act(async () => {
+      fireEvent.click(retry);
+    });
+    const script2 = await waitFor(() => {
+      const el = document.querySelector("script[data-tokenization-key]");
+      if (!el) throw new Error("retry did not re-inject the script");
+      return el;
+    });
+    window.CollectJS = mock.collectJS;
+    await act(async () => {
+      script2.dispatchEvent(new Event("load"));
+    });
+
+    // Session mounts cleanly: live fields appear, the panel is gone.
+    await fieldsReady(mock);
+    await waitFor(() =>
+      expect(container.querySelectorAll("iframe.CollectJSInlineIframe")).toHaveLength(3),
+    );
+    expect(container.querySelector(".kb-status")).toBeNull();
+    expect(screen.getByRole("button").textContent).toContain("Pay");
+  });
+});

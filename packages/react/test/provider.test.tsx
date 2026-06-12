@@ -1,17 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { installMockCollectJS, resetKicbacForTests, type MockCollectJS } from "@kicbac/js/testing";
 import { KicbacProvider, useKicbac } from "../src/index.js";
 import { TEST_KEY, removeInjectedStyles } from "./helpers.jsx";
 
 function Probe() {
-  const { isLoaded, kicbac, loadError } = useKicbac();
+  const { isLoaded, kicbac, loadError, reload } = useKicbac();
   return (
     <div>
       <span data-testid="loaded">{String(isLoaded)}</span>
       <span data-testid="client">{kicbac ? kicbac.tokenizationKey : "none"}</span>
       <span data-testid="error">{loadError ? loadError.code : "none"}</span>
       <span data-testid="error-message">{loadError ? loadError.message : ""}</span>
+      <button data-testid="reload" onClick={reload}>
+        reload
+      </button>
     </div>
   );
 }
@@ -74,6 +77,40 @@ describe("KicbacProvider", () => {
     expect(screen.getByTestId("error-message").textContent).toContain(
       "NEXT_PUBLIC_KICBAC_TOKENIZATION_KEY",
     );
+  });
+
+  it("reload() re-attempts the script after a transient failure", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <KicbacProvider tokenizationKey={TEST_KEY}>
+        <Probe />
+      </KicbacProvider>,
+    );
+
+    const script1 = await waitFor(() => {
+      const el = document.querySelector("script[data-tokenization-key]");
+      if (!el) throw new Error("script not injected yet");
+      return el;
+    });
+    script1.dispatchEvent(new Event("error"));
+    await waitFor(() => expect(screen.getByTestId("error").textContent).toBe("script_load_failed"));
+
+    // reload() clears the error and re-injects; a successful second load wins.
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("reload"));
+    });
+    await waitFor(() => expect(screen.getByTestId("error").textContent).toBe("none"));
+    const script2 = await waitFor(() => {
+      const el = document.querySelector("script[data-tokenization-key]");
+      if (!el) throw new Error("reload did not re-inject");
+      return el;
+    });
+    mock = installMockCollectJS();
+    await act(async () => {
+      script2.dispatchEvent(new Event("load"));
+    });
+    await waitFor(() => expect(screen.getByTestId("loaded").textContent).toBe("true"));
+    expect(screen.getByTestId("error").textContent).toBe("none");
   });
 
   it("useKicbac outside a provider throws a helpful invariant", () => {

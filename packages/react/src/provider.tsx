@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -16,6 +17,8 @@ export interface KicbacContextValue {
   kicbac: KicbacClient | null;
   loadError: KicbacLoadError | null;
   appearance: KicbacAppearance | undefined;
+  /** Re-attempt loading Collect.js after a transient failure (powers retry). */
+  reload: () => void;
 }
 
 const KicbacContext = createContext<KicbacContextValue | null>(null);
@@ -46,6 +49,13 @@ export function KicbacProvider(props: KicbacProviderProps): ReactNode {
   const { tokenizationKey, appearance, scriptUrl, nonce, injectStyles = true, children } = props;
   const [client, setClient] = useState<KicbacClient | null>(null);
   const [loadError, setLoadError] = useState<KicbacLoadError | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const reload = useCallback(() => {
+    setClient(null);
+    setLoadError(null);
+    setReloadKey((key) => key + 1);
+  }, []);
 
   useEffect(() => {
     if (!injectStyles) return;
@@ -65,24 +75,28 @@ export function KicbacProvider(props: KicbacProviderProps): ReactNode {
       },
       (error: unknown) => {
         if (cancelled) return;
-        setLoadError(
+        const loadFailure =
           error instanceof KicbacLoadError
             ? error
             : new KicbacLoadError(
                 "script_load_failed",
                 error instanceof Error ? error.message : String(error),
-              ),
-        );
+              );
+        // Surface the real cause to developers — the shopper sees only the
+        // branded fallback panel, so this console line is their one signal.
+        // eslint-disable-next-line no-console
+        console.error(`[kicbac] Collect.js failed to load (${loadFailure.code}): ${loadFailure.message}`);
+        setLoadError(loadFailure);
       },
     );
     return () => {
       cancelled = true;
     };
-  }, [tokenizationKey, scriptUrl, nonce]);
+  }, [tokenizationKey, scriptUrl, nonce, reloadKey]);
 
   const value = useMemo<KicbacContextValue>(
-    () => ({ isLoaded: client !== null, kicbac: client, loadError, appearance }),
-    [client, loadError, appearance],
+    () => ({ isLoaded: client !== null, kicbac: client, loadError, appearance, reload }),
+    [client, loadError, appearance, reload],
   );
 
   return <KicbacContext.Provider value={value}>{children}</KicbacContext.Provider>;
@@ -100,8 +114,14 @@ export function useKicbacContext(): KicbacContextValue {
   return context;
 }
 
-/** Tri-state Collect.js loading status: `{ isLoaded, kicbac, loadError }`. */
-export function useKicbac(): Pick<KicbacContextValue, "isLoaded" | "kicbac" | "loadError"> {
-  const { isLoaded, kicbac, loadError } = useKicbacContext();
-  return { isLoaded, kicbac, loadError };
+/**
+ * Tri-state Collect.js loading status plus a `reload()` to re-attempt loading
+ * after a transient failure: `{ isLoaded, kicbac, loadError, reload }`.
+ */
+export function useKicbac(): Pick<
+  KicbacContextValue,
+  "isLoaded" | "kicbac" | "loadError" | "reload"
+> {
+  const { isLoaded, kicbac, loadError, reload } = useKicbacContext();
+  return { isLoaded, kicbac, loadError, reload };
 }

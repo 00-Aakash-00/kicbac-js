@@ -35,6 +35,7 @@ const ACTIONS: Record<string, FormMachineAction> = {
   FAIL: { type: "FAIL", error: declineError },
   RESET: { type: "RESET" },
   LOAD_ERROR: { type: "LOAD_ERROR", error: loadError },
+  RECOVER: { type: "RECOVER" },
 };
 
 /**
@@ -52,6 +53,7 @@ const TABLE: Record<KicbacFormStatus, Record<keyof typeof ACTIONS, KicbacFormSta
     FAIL: "idle",
     RESET: "idle",
     LOAD_ERROR: "error",
+    RECOVER: "idle",
   },
   loading: {
     SESSION_CREATED: "loading",
@@ -63,6 +65,7 @@ const TABLE: Record<KicbacFormStatus, Record<keyof typeof ACTIONS, KicbacFormSta
     FAIL: "loading",
     RESET: "loading",
     LOAD_ERROR: "error",
+    RECOVER: "loading",
   },
   ready: {
     SESSION_CREATED: "ready",
@@ -74,6 +77,7 @@ const TABLE: Record<KicbacFormStatus, Record<keyof typeof ACTIONS, KicbacFormSta
     FAIL: "ready",
     RESET: "ready",
     LOAD_ERROR: "error",
+    RECOVER: "ready",
   },
   tokenizing: {
     SESSION_CREATED: "tokenizing",
@@ -85,6 +89,7 @@ const TABLE: Record<KicbacFormStatus, Record<keyof typeof ACTIONS, KicbacFormSta
     FAIL: "error",
     RESET: "ready",
     LOAD_ERROR: "error",
+    RECOVER: "tokenizing",
   },
   submitting: {
     SESSION_CREATED: "submitting",
@@ -96,6 +101,7 @@ const TABLE: Record<KicbacFormStatus, Record<keyof typeof ACTIONS, KicbacFormSta
     FAIL: "error",
     RESET: "ready",
     LOAD_ERROR: "error",
+    RECOVER: "submitting",
   },
   success: {
     SESSION_CREATED: "success",
@@ -107,6 +113,7 @@ const TABLE: Record<KicbacFormStatus, Record<keyof typeof ACTIONS, KicbacFormSta
     FAIL: "success",
     RESET: "ready",
     LOAD_ERROR: "error",
+    RECOVER: "success",
   },
   error: {
     SESSION_CREATED: "error",
@@ -118,6 +125,7 @@ const TABLE: Record<KicbacFormStatus, Record<keyof typeof ACTIONS, KicbacFormSta
     FAIL: "error",
     RESET: "ready",
     LOAD_ERROR: "error",
+    RECOVER: "error",
   },
 };
 
@@ -139,6 +147,27 @@ describe("formReducer details", () => {
     const errored: FormMachineState = { ...stateWith("error"), error: declineError };
     const next = formReducer(errored, { type: "SUBMIT" });
     expect(next.status).toBe("tokenizing");
+    expect(next.error).toBeNull();
+  });
+
+  it("RECOVER clears a fatal load error and returns to loading", () => {
+    const fatal: FormMachineState = { ...stateWith("error"), error: loadError };
+    const next = formReducer(fatal, { type: "RECOVER" });
+    expect(next.status).toBe("loading");
+    expect(next.error).toBeNull();
+  });
+
+  it("RECOVER leaves a recoverable (decline) error untouched", () => {
+    const declined: FormMachineState = { ...stateWith("error"), error: declineError };
+    const next = formReducer(declined, { type: "RECOVER" });
+    expect(next.status).toBe("error");
+    expect(next.error).toBe(declineError);
+  });
+
+  it("SESSION_CREATED recovers from a fatal load error (retry that mounts)", () => {
+    const fatal: FormMachineState = { ...stateWith("error"), error: loadError };
+    const next = formReducer(fatal, { type: "SESSION_CREATED" });
+    expect(next.status).toBe("loading");
     expect(next.error).toBeNull();
   });
 

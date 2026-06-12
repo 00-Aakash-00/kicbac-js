@@ -134,11 +134,17 @@ export function usePaymentForm(options: UsePaymentFormOptions = {}): UsePaymentF
   appearanceRef.current = appearance;
 
   useEffect(() => {
-    if (!loadError) return;
-    dispatch({
-      type: "LOAD_ERROR",
-      error: { type: "load", code: loadError.code, message: loadError.message },
-    });
+    if (loadError) {
+      dispatch({
+        type: "LOAD_ERROR",
+        error: { type: "load", code: loadError.code, message: loadError.message },
+      });
+    } else {
+      // Provider recovered (e.g. retry re-attempted the script): clear any
+      // stale fatal error BEFORE a new client arrives, so the field body is
+      // rendered when the session effect runs (no mount into a hidden panel).
+      dispatch({ type: "RECOVER" });
+    }
   }, [loadError]);
 
   useEffect(() => {
