@@ -1,0 +1,33 @@
+{
+  "$comment": "AVS response codes. Source: Kicbac-Direct-Post-API.pdf AVS appendix / docs.nmi.com response codes reference.",
+  "codes": {
+    "X": "Exact match, 9-character numeric ZIP",
+    "Y": "Exact match, 5-character numeric ZIP",
+    "D": "Exact match, 5-character numeric ZIP",
+    "M": "Exact match, 5-character numeric ZIP",
+    "2": "Exact match, 5-character numeric ZIP, customer name",
+    "6": "Exact match, 5-character numeric ZIP, customer name",
+    "A": "Address match only",
+    "B": "Address match only",
+    "3": "Address and customer name match only",
+    "7": "Address and customer name match only",
+    "W": "9-character numeric ZIP match only",
+    "Z": "5-character ZIP match only",
+    "P": "5-character ZIP match only",
+    "L": "5-character ZIP match only",
+    "1": "5-character ZIP and customer name match only",
+    "5": "5-character ZIP and customer name match only",
+    "N": "No address or ZIP match",
+    "C": "No address or ZIP match",
+    "4": "No address or ZIP match, customer name",
+    "8": "No address or ZIP match, customer name",
+    "U": "Address information unavailable",
+    "G": "Non-U.S. issuer does not participate",
+    "I": "Non-U.S. issuer does not participate",
+    "R": "Issuer system unavailable, retry",
+    "E": "Not a mail/phone order",
+    "S": "Service not supported",
+    "0": "AVS not available",
+    "O": "AVS not available"
+  }
+}

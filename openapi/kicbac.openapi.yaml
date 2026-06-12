@@ -1,0 +1,3694 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kicbac Gateway API",
+    "version": "2026-06-12",
+    "description": "Classic form-encoded Kicbac gateway API, Collect.js tokenized payment fields, Query API reporting, and webhook delivery contracts."
+  },
+  "servers": [
+    {
+      "url": "https://kicbac.transactiongateway.com",
+      "description": "Kicbac gateway"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Payment API",
+      "description": "Form-encoded transaction, vault, recurring, and invoice operations."
+    },
+    {
+      "name": "Query API",
+      "description": "Form-encoded reporting and lookup endpoint."
+    },
+    {
+      "name": "Webhooks",
+      "description": "HTTPS event deliveries signed with Webhook-Signature."
+    }
+  ],
+  "paths": {
+    "/api/transact.php": {
+      "post": {
+        "tags": [
+          "Payment API"
+        ],
+        "operationId": "submitTransaction",
+        "summary": "Submit a gateway operation",
+        "description": "Use this endpoint for sales, authorizations, captures, voids, refunds, Customer Vault operations, recurring plans/subscriptions, and invoices. Tokenize browser payment details with Collect.js and send payment_token; do not post raw PAN/CVV from merchant servers.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactRequest"
+              },
+              "examples": {
+                "saleWithPaymentToken": {
+                  "summary": "Card sale with a Collect.js test token",
+                  "value": {
+                    "security_key": "test_security_key",
+                    "type": "sale",
+                    "amount": "49.99",
+                    "payment_token": "00000000-000000-000000-000000000000",
+                    "orderid": "order_1001"
+                  }
+                },
+                "achSaleWithPaymentToken": {
+                  "summary": "ACH sale with a Collect.js test token",
+                  "value": {
+                    "security_key": "test_security_key",
+                    "type": "sale",
+                    "payment": "check",
+                    "amount": "19.99",
+                    "payment_token": "11111111-111111-111111-111111111111",
+                    "orderid": "ach_order_1001"
+                  }
+                },
+                "followUpMitCharge": {
+                  "summary": "Follow-up merchant-initiated stored credential charge",
+                  "value": {
+                    "security_key": "test_security_key",
+                    "type": "sale",
+                    "amount": "9.99",
+                    "customer_vault_id": "123456789",
+                    "initiated_by": "merchant",
+                    "stored_credential_indicator": "used",
+                    "initial_transaction_id": "9876543210"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gateway operation result. HTTP 200 does not mean approved; inspect response. response=1 is approved, response=2 is a typed decline result, response=3 is a gateway/processor error.",
+            "content": {
+              "application/x-www-form-urlencoded": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayResponse"
+                },
+                "examples": {
+                  "approved": {
+                    "value": {
+                      "response": "1",
+                      "responsetext": "SUCCESS",
+                      "authcode": "123456",
+                      "transactionid": "1234560000",
+                      "response_code": "100"
+                    }
+                  },
+                  "declined": {
+                    "value": {
+                      "response": "2",
+                      "responsetext": "DECLINE",
+                      "transactionid": "1234560001",
+                      "response_code": "200"
+                    }
+                  },
+                  "error": {
+                    "value": {
+                      "response": "3",
+                      "responsetext": "Rate limit exceeded",
+                      "response_code": "301"
+                    }
+                  }
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "approved": {
+                    "value": "response=1&responsetext=SUCCESS&authcode=123456&transactionid=1234560000&response_code=100"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/query.php": {
+      "post": {
+        "tags": [
+          "Query API"
+        ],
+        "operationId": "queryGateway",
+        "summary": "Query transactions and reports",
+        "description": "Query reporting data, transactions, Customer Vault records, recurring records, invoice records, profile information, and test-mode status. This endpoint is safe for SDK retry logic; transact.php POSTs are not.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              },
+              "examples": {
+                "transactionByOrder": {
+                  "value": {
+                    "security_key": "test_security_key",
+                    "order_id": "order_1001"
+                  }
+                },
+                "testModeStatus": {
+                  "value": {
+                    "security_key": "test_security_key",
+                    "report_type": "test_mode_status"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "XML query response.",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "transaction": {
+                    "value": "<nm_response><transaction><transaction_id>1234560000</transaction_id><condition>pendingsettlement</condition></transaction></nm_response>"
+                  }
+                }
+              },
+              "text/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "transaction.sale.success": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveTransactionSaleSuccess",
+        "summary": "transaction.sale.success webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionSaleSuccessWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "transaction.check.status.settle": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveTransactionCheckStatusSettle",
+        "summary": "transaction.check.status.settle webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionCheckStatusSettleWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "transaction.check.status.return": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveTransactionCheckStatusReturn",
+        "summary": "transaction.check.status.return webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionCheckStatusReturnWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "transaction.check.status.latereturn": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveTransactionCheckStatusLatereturn",
+        "summary": "transaction.check.status.latereturn webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionCheckStatusLatereturnWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "recurring.plan.add": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveRecurringPlanAdd",
+        "summary": "recurring.plan.add webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringPlanAddWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "recurring.plan.update": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveRecurringPlanUpdate",
+        "summary": "recurring.plan.update webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringPlanUpdateWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "recurring.plan.delete": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveRecurringPlanDelete",
+        "summary": "recurring.plan.delete webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringPlanDeleteWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "recurring.subscription.add": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveRecurringSubscriptionAdd",
+        "summary": "recurring.subscription.add webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringSubscriptionAddWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "recurring.subscription.update": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveRecurringSubscriptionUpdate",
+        "summary": "recurring.subscription.update webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringSubscriptionUpdateWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "recurring.subscription.delete": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveRecurringSubscriptionDelete",
+        "summary": "recurring.subscription.delete webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringSubscriptionDeleteWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "settlement.batch.complete": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveSettlementBatchComplete",
+        "summary": "settlement.batch.complete webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementBatchCompleteWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "settlement.batch.failure": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveSettlementBatchFailure",
+        "summary": "settlement.batch.failure webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementBatchFailureWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "chargeback.batch.complete": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveChargebackBatchComplete",
+        "summary": "chargeback.batch.complete webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChargebackBatchCompleteWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "acu.summary.automaticallyupdated": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveAcuSummaryAutomaticallyupdated",
+        "summary": "acu.summary.automaticallyupdated webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcuSummaryAutomaticallyupdatedWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "acu.summary.closedaccount": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveAcuSummaryClosedaccount",
+        "summary": "acu.summary.closedaccount webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcuSummaryClosedaccountWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    },
+    "acu.summary.contactcustomer": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "operationId": "receiveAcuSummaryContactcustomer",
+        "summary": "acu.summary.contactcustomer webhook",
+        "description": "Kicbac sends this JSON payload to your HTTPS endpoint. Verify the Webhook-Signature header before parsing or acting on the event.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WebhookSignature"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcuSummaryContactcustomerWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return HTTP 200 only after the event is verified and accepted."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "WebhookSignature": {
+        "name": "Webhook-Signature",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^t=[^,]+,s=[A-Fa-f0-9]{64}$",
+          "examples": [
+            "t=a1b2c3d4e5f60718,s=48414960bf65c35db74773135fc0ba87daab35395dbefca4f4df2a25ea651759"
+          ]
+        },
+        "description": "Signature header. Verify HMAC-SHA256(signingKey, nonce + '.' + rawBody) where nonce is t and signature is s."
+      }
+    },
+    "schemas": {
+      "TransactRequest": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string",
+          "description": "Gateway supports additional documented processor and Level II/III fields."
+        },
+        "required": [
+          "security_key"
+        ],
+        "properties": {
+          "security_key": {
+            "type": "string",
+            "description": "Private gateway security key. Never expose this value in browser code."
+          },
+          "type": {
+            "type": "string",
+            "description": "Transaction operation type.",
+            "enum": [
+              "sale",
+              "auth",
+              "credit",
+              "validate",
+              "offline",
+              "capture",
+              "void",
+              "refund",
+              "update"
+            ]
+          },
+          "payment": {
+            "type": "string",
+            "description": "Payment rail selector.",
+            "enum": [
+              "creditcard",
+              "check",
+              "cash",
+              ""
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})$",
+            "examples": [
+              "49.99"
+            ],
+            "description": "Decimal amount in major currency units."
+          },
+          "payment_token": {
+            "type": "string",
+            "description": "Single-use Collect.js token. Preferred for card and ACH payments.",
+            "examples": [
+              "00000000-000000-000000-000000000000",
+              "11111111-111111-111111-111111111111"
+            ]
+          },
+          "customer_vault_id": {
+            "type": "string",
+            "description": "Customer Vault customer identifier."
+          },
+          "customer_vault": {
+            "type": "string",
+            "description": "Customer Vault operation.",
+            "enum": [
+              "add_customer",
+              "update_customer",
+              "delete_customer",
+              ""
+            ]
+          },
+          "billing_id": {
+            "type": "string",
+            "description": "Customer Vault billing record identifier."
+          },
+          "source_transaction_id": {
+            "type": "string",
+            "description": "Transaction ID to copy card data or vault a previous payment."
+          },
+          "transactionid": {
+            "type": "string",
+            "description": "Existing transaction ID for capture, void, refund, or update."
+          },
+          "authorization_code": {
+            "type": "string",
+            "description": "Authorization code for offline transactions."
+          },
+          "dup_seconds": {
+            "type": "string",
+            "description": "Gateway duplicate window in seconds."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code.",
+            "examples": [
+              "USD"
+            ]
+          },
+          "orderid": {
+            "type": "string",
+            "description": "Merchant order ID."
+          },
+          "order_description": {
+            "type": "string",
+            "description": "Order description."
+          },
+          "ponumber": {
+            "type": "string",
+            "description": "Purchase order number."
+          },
+          "first_name": {
+            "type": "string",
+            "description": "Billing first name."
+          },
+          "last_name": {
+            "type": "string",
+            "description": "Billing last name."
+          },
+          "address1": {
+            "type": "string",
+            "description": "Billing address line 1."
+          },
+          "address2": {
+            "type": "string",
+            "description": "Billing address line 2."
+          },
+          "city": {
+            "type": "string",
+            "description": "Billing city."
+          },
+          "state": {
+            "type": "string",
+            "description": "Billing state."
+          },
+          "zip": {
+            "type": "string",
+            "description": "Billing ZIP/postal code."
+          },
+          "country": {
+            "type": "string",
+            "description": "Billing country."
+          },
+          "email": {
+            "type": "string",
+            "description": "Billing email."
+          },
+          "phone": {
+            "type": "string",
+            "description": "Billing phone."
+          },
+          "shipping_firstname": {
+            "type": "string",
+            "description": "Shipping first name."
+          },
+          "shipping_lastname": {
+            "type": "string",
+            "description": "Shipping last name."
+          },
+          "shipping_address1": {
+            "type": "string",
+            "description": "Shipping address line 1."
+          },
+          "shipping_address2": {
+            "type": "string",
+            "description": "Shipping address line 2."
+          },
+          "shipping_city": {
+            "type": "string",
+            "description": "Shipping city."
+          },
+          "shipping_state": {
+            "type": "string",
+            "description": "Shipping state."
+          },
+          "shipping_zip": {
+            "type": "string",
+            "description": "Shipping ZIP/postal code."
+          },
+          "shipping_country": {
+            "type": "string",
+            "description": "Shipping country."
+          },
+          "checkaba": {
+            "type": "string",
+            "description": "ACH routing number. Prefer Collect.js ACH tokens when collecting in browser."
+          },
+          "checkaccount": {
+            "type": "string",
+            "description": "ACH account number. Prefer Collect.js ACH tokens when collecting in browser."
+          },
+          "checkname": {
+            "type": "string",
+            "description": "ACH account holder name."
+          },
+          "account_holder_type": {
+            "type": "string",
+            "description": "ACH account holder type.",
+            "enum": [
+              "personal",
+              "business",
+              ""
+            ]
+          },
+          "account_type": {
+            "type": "string",
+            "description": "ACH account type.",
+            "enum": [
+              "checking",
+              "savings",
+              ""
+            ]
+          },
+          "sec_code": {
+            "type": "string",
+            "description": "ACH SEC code.",
+            "examples": [
+              "WEB"
+            ]
+          },
+          "initiated_by": {
+            "type": "string",
+            "description": "Stored credential initiator.",
+            "enum": [
+              "customer",
+              "merchant",
+              ""
+            ]
+          },
+          "stored_credential_indicator": {
+            "type": "string",
+            "description": "Stored credential indicator.",
+            "enum": [
+              "stored",
+              "used",
+              ""
+            ]
+          },
+          "initial_transaction_id": {
+            "type": "string",
+            "description": "Original CIT transaction ID for follow-up MIT charges."
+          },
+          "billing_method": {
+            "type": "string",
+            "description": "Billing method for credential-on-file recurring/standing instruction flows."
+          },
+          "recurring": {
+            "type": "string",
+            "description": "Recurring operation.",
+            "enum": [
+              "add_plan",
+              "edit_plan",
+              "add_subscription",
+              "update_subscription",
+              "delete_subscription",
+              ""
+            ]
+          },
+          "plan_id": {
+            "type": "string",
+            "description": "Recurring plan ID."
+          },
+          "current_plan_id": {
+            "type": "string",
+            "description": "Existing recurring plan ID when editing a plan."
+          },
+          "plan_name": {
+            "type": "string",
+            "description": "Recurring plan name."
+          },
+          "payments": {
+            "type": "string",
+            "description": "Number of recurring payments."
+          },
+          "day_frequency": {
+            "type": "string",
+            "description": "Days between recurring charges."
+          },
+          "month_frequency": {
+            "type": "string",
+            "description": "Months between recurring charges."
+          },
+          "day_of_month": {
+            "type": "string",
+            "description": "Day of month for recurring charges."
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Subscription start date."
+          },
+          "subscription_id": {
+            "type": "string",
+            "description": "Subscription ID."
+          },
+          "invoicing": {
+            "type": "string",
+            "description": "Invoice operation.",
+            "enum": [
+              "add_invoice",
+              "update_invoice",
+              "send_invoice",
+              "close_invoice",
+              ""
+            ]
+          },
+          "invoice_id": {
+            "type": "string",
+            "description": "Invoice ID."
+          },
+          "payment_terms": {
+            "type": "string",
+            "description": "Invoice payment terms."
+          },
+          "payment_methods_allowed": {
+            "type": "string",
+            "description": "Comma-separated invoice payment methods."
+          },
+          "customer_receipt": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false",
+              "1",
+              "0"
+            ],
+            "description": "Gateway boolean form value."
+          },
+          "merchant_defined_field_1": {
+            "type": "string",
+            "description": "Merchant-defined field 1."
+          },
+          "merchant_defined_field_2": {
+            "type": "string",
+            "description": "Merchant-defined field 2."
+          },
+          "merchant_defined_field_3": {
+            "type": "string",
+            "description": "Merchant-defined field 3."
+          }
+        }
+      },
+      "QueryRequest": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        },
+        "required": [
+          "security_key"
+        ],
+        "properties": {
+          "security_key": {
+            "type": "string",
+            "description": "Private gateway security key."
+          },
+          "condition": {
+            "type": "string",
+            "description": "Transaction condition filter."
+          },
+          "transaction_type": {
+            "type": "string",
+            "description": "Transaction type filter."
+          },
+          "action_type": {
+            "type": "string",
+            "description": "Action type filter."
+          },
+          "source": {
+            "type": "string",
+            "description": "Transaction source filter."
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "Gateway transaction ID."
+          },
+          "subscription_id": {
+            "type": "string",
+            "description": "Recurring subscription ID."
+          },
+          "invoice_id": {
+            "type": "string",
+            "description": "Invoice ID."
+          },
+          "partial_payment_id": {
+            "type": "string",
+            "description": "Partial payment ID."
+          },
+          "order_id": {
+            "type": "string",
+            "description": "Merchant order ID."
+          },
+          "first_name": {
+            "type": "string",
+            "description": "Customer first name."
+          },
+          "last_name": {
+            "type": "string",
+            "description": "Customer last name."
+          },
+          "email": {
+            "type": "string",
+            "description": "Customer email."
+          },
+          "cc_number": {
+            "type": "string",
+            "description": "Card number filter as allowed by the gateway."
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Start timestamp/date filter."
+          },
+          "end_date": {
+            "type": "string",
+            "description": "End timestamp/date filter."
+          },
+          "report_type": {
+            "type": "string",
+            "description": "Special report type.",
+            "enum": [
+              "receipt",
+              "customer_vault",
+              "recurring",
+              "recurring_plans",
+              "invoicing",
+              "gateway_processors",
+              "account_updater",
+              "test_mode_status",
+              "profile",
+              ""
+            ]
+          },
+          "result_limit": {
+            "type": "string",
+            "description": "Maximum results per page."
+          },
+          "page_number": {
+            "type": "string",
+            "description": "Page number for paginated reports."
+          },
+          "processor_details": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false",
+              "1",
+              "0"
+            ],
+            "description": "Gateway boolean form value."
+          }
+        }
+      },
+      "GatewayResponse": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        },
+        "required": [
+          "response",
+          "responsetext"
+        ],
+        "properties": {
+          "response": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2",
+              "3"
+            ],
+            "description": "1 approved, 2 declined typed result, 3 gateway or processor error."
+          },
+          "responsetext": {
+            "type": "string",
+            "description": "Human-readable response text."
+          },
+          "response_code": {
+            "type": "string",
+            "description": "Gateway result code."
+          },
+          "authcode": {
+            "type": "string",
+            "description": "Authorization code for approved card transactions."
+          },
+          "transactionid": {
+            "type": "string",
+            "description": "Gateway transaction ID."
+          },
+          "avsresponse": {
+            "type": "string",
+            "description": "AVS response code."
+          },
+          "cvvresponse": {
+            "type": "string",
+            "description": "CVV response code."
+          },
+          "orderid": {
+            "type": "string",
+            "description": "Merchant order ID."
+          },
+          "customer_vault_id": {
+            "type": "string",
+            "description": "Customer Vault ID when created or returned."
+          },
+          "invoice_id": {
+            "type": "string",
+            "description": "Invoice ID when created."
+          },
+          "subscription_id": {
+            "type": "string",
+            "description": "Subscription ID when created."
+          },
+          "partial_payment_id": {
+            "type": "string",
+            "description": "Partial payment ID."
+          },
+          "partial_payment_balance": {
+            "type": "string",
+            "description": "Partial payment balance."
+          },
+          "amount_authorized": {
+            "type": "string",
+            "description": "Amount authorized."
+          }
+        },
+        "x-kicbac-response-codes": [
+          {
+            "code": 100,
+            "text": "Transaction was approved.",
+            "response": 1,
+            "outcome": "approved"
+          },
+          {
+            "code": 200,
+            "text": "Transaction was declined by processor.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 201,
+            "text": "Do not honor.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 202,
+            "text": "Insufficient funds.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 203,
+            "text": "Over limit.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 204,
+            "text": "Transaction not allowed.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 220,
+            "text": "Incorrect payment information.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 221,
+            "text": "No such card issuer.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 222,
+            "text": "No card number on file with issuer.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 223,
+            "text": "Expired card.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 224,
+            "text": "Invalid expiration date.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 225,
+            "text": "Invalid card security code.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 226,
+            "text": "Invalid PIN.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 240,
+            "text": "Call issuer for further information.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 250,
+            "text": "Pick up card.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 251,
+            "text": "Lost card.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 252,
+            "text": "Stolen card.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 253,
+            "text": "Fraudulent card.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 260,
+            "text": "Declined with further instructions available.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 261,
+            "text": "Declined - stop all recurring payments.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 262,
+            "text": "Declined - stop this recurring program.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 263,
+            "text": "Declined - update cardholder data available.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 264,
+            "text": "Declined - retry in a few days.",
+            "response": 2,
+            "outcome": "declined"
+          },
+          {
+            "code": 300,
+            "text": "Transaction was rejected by gateway.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "InvalidRequestError",
+            "note": "Becomes AuthenticationError when responsetext matches the auth-failure pattern."
+          },
+          {
+            "code": 301,
+            "text": "Rate limit exceeded.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "RateLimitError",
+            "note": "Payment-API rate limit; never auto-retried."
+          },
+          {
+            "code": 400,
+            "text": "Transaction error returned by processor.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 410,
+            "text": "Invalid merchant configuration.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 411,
+            "text": "Merchant account is inactive.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 420,
+            "text": "Communication error.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 421,
+            "text": "Communication error with issuer.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 430,
+            "text": "Duplicate transaction at processor.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 440,
+            "text": "Processor format error.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 441,
+            "text": "Invalid transaction information.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 460,
+            "text": "Processor feature not available.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          },
+          {
+            "code": 461,
+            "text": "Unsupported card type.",
+            "response": 3,
+            "outcome": "error",
+            "error_class": "ProcessorError"
+          }
+        ],
+        "x-kicbac-test-amount-simulation": [
+          {
+            "amount": "1.00",
+            "expect_response": 1,
+            "expect_code": 100,
+            "description": "Amounts >= 1.00 approve in test mode"
+          },
+          {
+            "amount": "49.99",
+            "expect_response": 1,
+            "expect_code": 100,
+            "description": "Typical approval"
+          },
+          {
+            "amount": "0.99",
+            "expect_response": 2,
+            "expect_code": 200,
+            "description": "Amounts < 1.00 decline in test mode"
+          },
+          {
+            "amount": "0.05",
+            "expect_response": 2,
+            "expect_code": 200,
+            "description": "Decline simulation"
+          }
+        ]
+      },
+      "WebhookEnvelope": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "event_id",
+          "event_type",
+          "event_body"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Unique webhook event identifier.",
+            "format": "uuid",
+            "examples": [
+              "9b312dfd-3174-4748-9447-d63c8744305a"
+            ]
+          },
+          "event_type": {
+            "type": "string",
+            "description": "Webhook event type."
+          },
+          "event_body": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Event-specific payload."
+          }
+        }
+      },
+      "Merchant": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "Gateway merchant identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "Merchant display name."
+          }
+        }
+      },
+      "Features": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "is_test_mode": {
+            "type": "boolean",
+            "description": "True when the merchant account is running in test mode."
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "description": "First name."
+          },
+          "last_name": {
+            "type": "string",
+            "description": "Last name."
+          },
+          "address_1": {
+            "type": "string",
+            "description": "Street address line 1."
+          },
+          "address_2": {
+            "type": "string",
+            "description": "Street address line 2."
+          },
+          "company": {
+            "type": "string",
+            "description": "Company name."
+          },
+          "city": {
+            "type": "string",
+            "description": "City."
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province."
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "Postal or ZIP code."
+          },
+          "country": {
+            "type": "string",
+            "description": "Country code."
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address.",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number."
+          },
+          "cell_phone": {
+            "type": "string",
+            "description": "Cell phone number."
+          },
+          "fax": {
+            "type": "string",
+            "description": "Fax number."
+          }
+        }
+      },
+      "CardSummary": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "cc_number": {
+            "type": "string",
+            "description": "Masked card number. Webhook payloads never contain a full PAN."
+          },
+          "cc_exp": {
+            "type": "string",
+            "description": "Expiration date as sent by the gateway."
+          },
+          "cavv": {
+            "type": "string",
+            "description": "3-D Secure CAVV value when present."
+          },
+          "cavv_result": {
+            "type": "string",
+            "description": "3-D Secure CAVV result."
+          },
+          "xid": {
+            "type": "string",
+            "description": "3-D Secure XID."
+          },
+          "eci": {
+            "type": "string",
+            "description": "Electronic commerce indicator."
+          },
+          "avs_response": {
+            "type": "string",
+            "description": "AVS response code."
+          },
+          "csc_response": {
+            "type": "string",
+            "description": "CVV/CSC response code."
+          },
+          "cardholder_auth": {
+            "type": "string",
+            "description": "Cardholder authentication result."
+          },
+          "cc_start_date": {
+            "type": "string",
+            "description": "Card start date when present."
+          },
+          "cc_issue_number": {
+            "type": "string",
+            "description": "Card issue number when present."
+          },
+          "card_balance": {
+            "type": "string",
+            "description": "Card balance when returned."
+          },
+          "card_available_balance": {
+            "type": "string",
+            "description": "Available balance when returned."
+          },
+          "entry_mode": {
+            "type": "string",
+            "description": "Entry mode code."
+          },
+          "cc_bin": {
+            "type": "string",
+            "description": "Card BIN if included."
+          },
+          "cc_type": {
+            "type": "string",
+            "description": "Card brand/type if included."
+          }
+        }
+      },
+      "CheckSummary": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "check_account": {
+            "type": "string",
+            "description": "Masked checking account number."
+          },
+          "check_aba": {
+            "type": "string",
+            "description": "Routing number as reported by the gateway."
+          },
+          "check_name": {
+            "type": "string",
+            "description": "Account holder name."
+          },
+          "account_holder_type": {
+            "type": "string",
+            "description": "Account holder type.",
+            "enum": [
+              "personal",
+              "business",
+              ""
+            ]
+          },
+          "account_type": {
+            "type": "string",
+            "description": "Account type.",
+            "enum": [
+              "checking",
+              "savings",
+              ""
+            ]
+          },
+          "sec_code": {
+            "type": "string",
+            "description": "ACH SEC code.",
+            "examples": [
+              "WEB"
+            ]
+          }
+        }
+      },
+      "TransactionAction": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})$",
+            "examples": [
+              "49.99"
+            ],
+            "description": "Decimal amount in major currency units."
+          },
+          "action_type": {
+            "type": "string",
+            "description": "Gateway action type for this transaction event."
+          },
+          "date": {
+            "type": "string",
+            "description": "Gateway timestamp in YYYYMMDDHHMMSS format."
+          },
+          "success": {
+            "type": "string",
+            "description": "Gateway success flag, usually 1 or 0."
+          },
+          "ip_address": {
+            "type": "string",
+            "description": "Originating IP address when present."
+          },
+          "source": {
+            "type": "string",
+            "description": "Gateway source channel."
+          },
+          "api_method": {
+            "type": "string",
+            "description": "Gateway API method."
+          },
+          "username": {
+            "type": "string",
+            "description": "Gateway username when applicable."
+          },
+          "response_text": {
+            "type": "string",
+            "description": "Gateway response text."
+          },
+          "response_code": {
+            "type": "string",
+            "description": "Gateway response code."
+          },
+          "processor_response_text": {
+            "type": "string",
+            "description": "Processor response text."
+          },
+          "processor_response_code": {
+            "type": "string",
+            "description": "Processor response code."
+          },
+          "tap_to_mobile": {
+            "type": "boolean",
+            "description": "Tap to mobile flag when present."
+          },
+          "device_license_number": {
+            "type": "string",
+            "description": "Device license number."
+          },
+          "device_nickname": {
+            "type": "string",
+            "description": "Device nickname."
+          }
+        }
+      },
+      "Processor": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Processor identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "Processor display name."
+          },
+          "type": {
+            "type": "string",
+            "description": "Processor type.",
+            "examples": [
+              "cc",
+              "ck"
+            ]
+          }
+        }
+      },
+      "TransactionWebhookBody": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "merchant",
+          "transaction_id",
+          "transaction_type",
+          "condition",
+          "action"
+        ],
+        "properties": {
+          "merchant": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "description": "Gateway merchant identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name."
+              }
+            }
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "is_test_mode": {
+                "type": "boolean",
+                "description": "True when the merchant account is running in test mode."
+              }
+            }
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "Gateway transaction ID."
+          },
+          "transaction_type": {
+            "type": "string",
+            "description": "Gateway transaction payment type.",
+            "enum": [
+              "cc",
+              "ck",
+              "cs",
+              ""
+            ]
+          },
+          "condition": {
+            "type": "string",
+            "description": "Gateway transaction condition."
+          },
+          "processor_id": {
+            "type": "string",
+            "description": "Processor identifier."
+          },
+          "ponumber": {
+            "type": "string",
+            "description": "Purchase order number."
+          },
+          "order_description": {
+            "type": "string",
+            "description": "Order description."
+          },
+          "order_id": {
+            "type": "string",
+            "description": "Merchant order ID."
+          },
+          "customerid": {
+            "type": "string",
+            "description": "Customer ID."
+          },
+          "customertaxid": {
+            "type": "string",
+            "description": "Customer tax ID."
+          },
+          "website": {
+            "type": "string",
+            "description": "Website URL."
+          },
+          "shipping": {
+            "type": "string",
+            "description": "Shipping amount."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code.",
+            "examples": [
+              "USD"
+            ]
+          },
+          "tax": {
+            "type": "string",
+            "description": "Tax amount."
+          },
+          "surcharge": {
+            "type": "string",
+            "description": "Surcharge amount."
+          },
+          "cash_discount": {
+            "type": "string",
+            "description": "Cash discount amount."
+          },
+          "tip": {
+            "type": "string",
+            "description": "Tip amount."
+          },
+          "requested_amount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})$",
+            "examples": [
+              "49.99"
+            ],
+            "description": "Decimal amount in major currency units."
+          },
+          "shipping_carrier": {
+            "type": "string",
+            "description": "Shipping carrier."
+          },
+          "tracking_number": {
+            "type": "string",
+            "description": "Tracking number."
+          },
+          "shipping_date": {
+            "type": "string",
+            "description": "Shipping date."
+          },
+          "partial_payment_id": {
+            "type": "string",
+            "description": "Partial payment ID."
+          },
+          "partial_payment_balance": {
+            "type": "string",
+            "description": "Partial payment balance."
+          },
+          "platform_id": {
+            "type": "string",
+            "description": "Platform ID."
+          },
+          "authorization_code": {
+            "type": "string",
+            "description": "Authorization code."
+          },
+          "social_security_number": {
+            "type": "string",
+            "description": "Masked social security number when present."
+          },
+          "drivers_license_number": {
+            "type": "string",
+            "description": "Driver license number when present."
+          },
+          "drivers_license_state": {
+            "type": "string",
+            "description": "Driver license state."
+          },
+          "drivers_license_dob": {
+            "type": "string",
+            "description": "Masked driver license date of birth."
+          },
+          "billing_address": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "first_name": {
+                "type": "string",
+                "description": "First name."
+              },
+              "last_name": {
+                "type": "string",
+                "description": "Last name."
+              },
+              "address_1": {
+                "type": "string",
+                "description": "Street address line 1."
+              },
+              "address_2": {
+                "type": "string",
+                "description": "Street address line 2."
+              },
+              "company": {
+                "type": "string",
+                "description": "Company name."
+              },
+              "city": {
+                "type": "string",
+                "description": "City."
+              },
+              "state": {
+                "type": "string",
+                "description": "State or province."
+              },
+              "postal_code": {
+                "type": "string",
+                "description": "Postal or ZIP code."
+              },
+              "country": {
+                "type": "string",
+                "description": "Country code."
+              },
+              "email": {
+                "type": "string",
+                "description": "Email address.",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Phone number."
+              },
+              "cell_phone": {
+                "type": "string",
+                "description": "Cell phone number."
+              },
+              "fax": {
+                "type": "string",
+                "description": "Fax number."
+              }
+            }
+          },
+          "shipping_address": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "first_name": {
+                "type": "string",
+                "description": "First name."
+              },
+              "last_name": {
+                "type": "string",
+                "description": "Last name."
+              },
+              "address_1": {
+                "type": "string",
+                "description": "Street address line 1."
+              },
+              "address_2": {
+                "type": "string",
+                "description": "Street address line 2."
+              },
+              "company": {
+                "type": "string",
+                "description": "Company name."
+              },
+              "city": {
+                "type": "string",
+                "description": "City."
+              },
+              "state": {
+                "type": "string",
+                "description": "State or province."
+              },
+              "postal_code": {
+                "type": "string",
+                "description": "Postal or ZIP code."
+              },
+              "country": {
+                "type": "string",
+                "description": "Country code."
+              },
+              "email": {
+                "type": "string",
+                "description": "Email address.",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Phone number."
+              },
+              "cell_phone": {
+                "type": "string",
+                "description": "Cell phone number."
+              },
+              "fax": {
+                "type": "string",
+                "description": "Fax number."
+              }
+            }
+          },
+          "card": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "cc_number": {
+                "type": "string",
+                "description": "Masked card number. Webhook payloads never contain a full PAN."
+              },
+              "cc_exp": {
+                "type": "string",
+                "description": "Expiration date as sent by the gateway."
+              },
+              "cavv": {
+                "type": "string",
+                "description": "3-D Secure CAVV value when present."
+              },
+              "cavv_result": {
+                "type": "string",
+                "description": "3-D Secure CAVV result."
+              },
+              "xid": {
+                "type": "string",
+                "description": "3-D Secure XID."
+              },
+              "eci": {
+                "type": "string",
+                "description": "Electronic commerce indicator."
+              },
+              "avs_response": {
+                "type": "string",
+                "description": "AVS response code."
+              },
+              "csc_response": {
+                "type": "string",
+                "description": "CVV/CSC response code."
+              },
+              "cardholder_auth": {
+                "type": "string",
+                "description": "Cardholder authentication result."
+              },
+              "cc_start_date": {
+                "type": "string",
+                "description": "Card start date when present."
+              },
+              "cc_issue_number": {
+                "type": "string",
+                "description": "Card issue number when present."
+              },
+              "card_balance": {
+                "type": "string",
+                "description": "Card balance when returned."
+              },
+              "card_available_balance": {
+                "type": "string",
+                "description": "Available balance when returned."
+              },
+              "entry_mode": {
+                "type": "string",
+                "description": "Entry mode code."
+              },
+              "cc_bin": {
+                "type": "string",
+                "description": "Card BIN if included."
+              },
+              "cc_type": {
+                "type": "string",
+                "description": "Card brand/type if included."
+              }
+            }
+          },
+          "check": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "check_account": {
+                "type": "string",
+                "description": "Masked checking account number."
+              },
+              "check_aba": {
+                "type": "string",
+                "description": "Routing number as reported by the gateway."
+              },
+              "check_name": {
+                "type": "string",
+                "description": "Account holder name."
+              },
+              "account_holder_type": {
+                "type": "string",
+                "description": "Account holder type.",
+                "enum": [
+                  "personal",
+                  "business",
+                  ""
+                ]
+              },
+              "account_type": {
+                "type": "string",
+                "description": "Account type.",
+                "enum": [
+                  "checking",
+                  "savings",
+                  ""
+                ]
+              },
+              "sec_code": {
+                "type": "string",
+                "description": "ACH SEC code.",
+                "examples": [
+                  "WEB"
+                ]
+              }
+            }
+          },
+          "merchant_defined_fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Merchant-defined fields."
+          },
+          "action": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "amount": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{2})$",
+                "examples": [
+                  "49.99"
+                ],
+                "description": "Decimal amount in major currency units."
+              },
+              "action_type": {
+                "type": "string",
+                "description": "Gateway action type for this transaction event."
+              },
+              "date": {
+                "type": "string",
+                "description": "Gateway timestamp in YYYYMMDDHHMMSS format."
+              },
+              "success": {
+                "type": "string",
+                "description": "Gateway success flag, usually 1 or 0."
+              },
+              "ip_address": {
+                "type": "string",
+                "description": "Originating IP address when present."
+              },
+              "source": {
+                "type": "string",
+                "description": "Gateway source channel."
+              },
+              "api_method": {
+                "type": "string",
+                "description": "Gateway API method."
+              },
+              "username": {
+                "type": "string",
+                "description": "Gateway username when applicable."
+              },
+              "response_text": {
+                "type": "string",
+                "description": "Gateway response text."
+              },
+              "response_code": {
+                "type": "string",
+                "description": "Gateway response code."
+              },
+              "processor_response_text": {
+                "type": "string",
+                "description": "Processor response text."
+              },
+              "processor_response_code": {
+                "type": "string",
+                "description": "Processor response code."
+              },
+              "tap_to_mobile": {
+                "type": "boolean",
+                "description": "Tap to mobile flag when present."
+              },
+              "device_license_number": {
+                "type": "string",
+                "description": "Device license number."
+              },
+              "device_nickname": {
+                "type": "string",
+                "description": "Device nickname."
+              }
+            }
+          }
+        }
+      },
+      "RecurringPlanWebhookBody": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "merchant",
+          "id",
+          "name",
+          "amount",
+          "payments"
+        ],
+        "properties": {
+          "merchant": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "description": "Gateway merchant identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name."
+              }
+            }
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "is_test_mode": {
+                "type": "boolean",
+                "description": "True when the merchant account is running in test mode."
+              }
+            }
+          },
+          "id": {
+            "type": "string",
+            "description": "Plan identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "Plan name."
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})$",
+            "examples": [
+              "49.99"
+            ],
+            "description": "Decimal amount in major currency units."
+          },
+          "payments": {
+            "type": "integer",
+            "description": "Number of payments."
+          },
+          "day_frequency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Days between charges when using day-frequency scheduling."
+          },
+          "month_frequency": {
+            "type": "integer",
+            "description": "Months between charges when using monthly scheduling."
+          },
+          "day_of_month": {
+            "type": "integer",
+            "description": "Day of month for monthly scheduling."
+          }
+        }
+      },
+      "RecurringSubscriptionWebhookBody": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "merchant",
+          "subscription_id",
+          "subscription_type",
+          "plan"
+        ],
+        "properties": {
+          "merchant": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "description": "Gateway merchant identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name."
+              }
+            }
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "is_test_mode": {
+                "type": "boolean",
+                "description": "True when the merchant account is running in test mode."
+              }
+            }
+          },
+          "subscription_id": {
+            "type": "string",
+            "description": "Subscription identifier."
+          },
+          "subscription_type": {
+            "type": "string",
+            "description": "Payment type.",
+            "enum": [
+              "cc",
+              "ck",
+              ""
+            ]
+          },
+          "processor_id": {
+            "type": "string",
+            "description": "Processor identifier."
+          },
+          "next_charge_date": {
+            "type": "string",
+            "description": "Next charge date.",
+            "format": "date"
+          },
+          "completed_payments": {
+            "type": "integer",
+            "description": "Completed payment count."
+          },
+          "attempted_payments": {
+            "type": "integer",
+            "description": "Attempted payment count."
+          },
+          "remaining_payments": {
+            "type": "integer",
+            "description": "Remaining payment count."
+          },
+          "ponumber": {
+            "type": "string",
+            "description": "Purchase order number."
+          },
+          "order_id": {
+            "type": "string",
+            "description": "Order ID."
+          },
+          "order_description": {
+            "type": "string",
+            "description": "Order description."
+          },
+          "shipping": {
+            "type": "string",
+            "description": "Shipping amount."
+          },
+          "tax": {
+            "type": "string",
+            "description": "Tax amount."
+          },
+          "website": {
+            "type": "string",
+            "description": "Website URL."
+          },
+          "plan": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "merchant",
+              "id",
+              "name",
+              "amount",
+              "payments"
+            ],
+            "properties": {
+              "merchant": {
+                "type": "object",
+                "additionalProperties": true,
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "properties": {
+                  "id": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "description": "Gateway merchant identifier."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Merchant display name."
+                  }
+                }
+              },
+              "features": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "is_test_mode": {
+                    "type": "boolean",
+                    "description": "True when the merchant account is running in test mode."
+                  }
+                }
+              },
+              "id": {
+                "type": "string",
+                "description": "Plan identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Plan name."
+              },
+              "amount": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{2})$",
+                "examples": [
+                  "49.99"
+                ],
+                "description": "Decimal amount in major currency units."
+              },
+              "payments": {
+                "type": "integer",
+                "description": "Number of payments."
+              },
+              "day_frequency": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Days between charges when using day-frequency scheduling."
+              },
+              "month_frequency": {
+                "type": "integer",
+                "description": "Months between charges when using monthly scheduling."
+              },
+              "day_of_month": {
+                "type": "integer",
+                "description": "Day of month for monthly scheduling."
+              }
+            }
+          },
+          "billing_address": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "first_name": {
+                "type": "string",
+                "description": "First name."
+              },
+              "last_name": {
+                "type": "string",
+                "description": "Last name."
+              },
+              "address_1": {
+                "type": "string",
+                "description": "Street address line 1."
+              },
+              "address_2": {
+                "type": "string",
+                "description": "Street address line 2."
+              },
+              "company": {
+                "type": "string",
+                "description": "Company name."
+              },
+              "city": {
+                "type": "string",
+                "description": "City."
+              },
+              "state": {
+                "type": "string",
+                "description": "State or province."
+              },
+              "postal_code": {
+                "type": "string",
+                "description": "Postal or ZIP code."
+              },
+              "country": {
+                "type": "string",
+                "description": "Country code."
+              },
+              "email": {
+                "type": "string",
+                "description": "Email address.",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Phone number."
+              },
+              "cell_phone": {
+                "type": "string",
+                "description": "Cell phone number."
+              },
+              "fax": {
+                "type": "string",
+                "description": "Fax number."
+              }
+            }
+          },
+          "card": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "cc_number": {
+                "type": "string",
+                "description": "Masked card number. Webhook payloads never contain a full PAN."
+              },
+              "cc_exp": {
+                "type": "string",
+                "description": "Expiration date as sent by the gateway."
+              },
+              "cavv": {
+                "type": "string",
+                "description": "3-D Secure CAVV value when present."
+              },
+              "cavv_result": {
+                "type": "string",
+                "description": "3-D Secure CAVV result."
+              },
+              "xid": {
+                "type": "string",
+                "description": "3-D Secure XID."
+              },
+              "eci": {
+                "type": "string",
+                "description": "Electronic commerce indicator."
+              },
+              "avs_response": {
+                "type": "string",
+                "description": "AVS response code."
+              },
+              "csc_response": {
+                "type": "string",
+                "description": "CVV/CSC response code."
+              },
+              "cardholder_auth": {
+                "type": "string",
+                "description": "Cardholder authentication result."
+              },
+              "cc_start_date": {
+                "type": "string",
+                "description": "Card start date when present."
+              },
+              "cc_issue_number": {
+                "type": "string",
+                "description": "Card issue number when present."
+              },
+              "card_balance": {
+                "type": "string",
+                "description": "Card balance when returned."
+              },
+              "card_available_balance": {
+                "type": "string",
+                "description": "Available balance when returned."
+              },
+              "entry_mode": {
+                "type": "string",
+                "description": "Entry mode code."
+              },
+              "cc_bin": {
+                "type": "string",
+                "description": "Card BIN if included."
+              },
+              "cc_type": {
+                "type": "string",
+                "description": "Card brand/type if included."
+              }
+            }
+          },
+          "check": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "check_account": {
+                "type": "string",
+                "description": "Masked checking account number."
+              },
+              "check_aba": {
+                "type": "string",
+                "description": "Routing number as reported by the gateway."
+              },
+              "check_name": {
+                "type": "string",
+                "description": "Account holder name."
+              },
+              "account_holder_type": {
+                "type": "string",
+                "description": "Account holder type.",
+                "enum": [
+                  "personal",
+                  "business",
+                  ""
+                ]
+              },
+              "account_type": {
+                "type": "string",
+                "description": "Account type.",
+                "enum": [
+                  "checking",
+                  "savings",
+                  ""
+                ]
+              },
+              "sec_code": {
+                "type": "string",
+                "description": "ACH SEC code.",
+                "examples": [
+                  "WEB"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "SettlementBatchCompleteWebhookBody": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "batch_id",
+          "count",
+          "amount",
+          "merchant",
+          "processor"
+        ],
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "description": "Settlement batch ID."
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of transactions in the batch."
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})$",
+            "examples": [
+              "49.99"
+            ],
+            "description": "Decimal amount in major currency units."
+          },
+          "merchant": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "description": "Gateway merchant identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name."
+              }
+            }
+          },
+          "processor": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Processor identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Processor display name."
+              },
+              "type": {
+                "type": "string",
+                "description": "Processor type.",
+                "examples": [
+                  "cc",
+                  "ck"
+                ]
+              }
+            }
+          },
+          "by_card_type": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "integer"
+                },
+                "amount": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d{2})$",
+                  "examples": [
+                    "49.99"
+                  ],
+                  "description": "Decimal amount in major currency units."
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "transaction_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SettlementBatchFailureWebhookBody": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "batch_id",
+          "merchant",
+          "processor"
+        ],
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "description": "Settlement batch ID."
+          },
+          "merchant": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "description": "Gateway merchant identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name."
+              }
+            }
+          },
+          "processor": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Processor identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Processor display name."
+              },
+              "type": {
+                "type": "string",
+                "description": "Processor type.",
+                "examples": [
+                  "cc",
+                  "ck"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "ChargebackBatchCompleteWebhookBody": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "merchant",
+          "processor",
+          "count",
+          "chargebacks"
+        ],
+        "properties": {
+          "merchant": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "description": "Gateway merchant identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name."
+              }
+            }
+          },
+          "processor": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Processor identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Processor display name."
+              },
+              "type": {
+                "type": "string",
+                "description": "Processor type.",
+                "examples": [
+                  "cc",
+                  "ck"
+                ]
+              }
+            }
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of chargebacks in the batch."
+          },
+          "chargeback_amount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})$",
+            "examples": [
+              "49.99"
+            ],
+            "description": "Decimal amount in major currency units."
+          },
+          "chargebacks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Chargeback ID."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "Chargeback date."
+                },
+                "customer_name": {
+                  "type": "string",
+                  "description": "Customer name."
+                },
+                "cc_number": {
+                  "type": "string",
+                  "description": "Masked card number."
+                },
+                "amount": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d{2})$",
+                  "examples": [
+                    "49.99"
+                  ],
+                  "description": "Decimal amount in major currency units."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Chargeback reason."
+                }
+              }
+            }
+          }
+        }
+      },
+      "AutomaticCardUpdaterWebhookBody": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "updated_date",
+          "merchant",
+          "cards_checked"
+        ],
+        "properties": {
+          "updated_date": {
+            "type": "string",
+            "description": "ACU summary date.",
+            "format": "date"
+          },
+          "merchant": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "description": "Gateway merchant identifier."
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name."
+              }
+            }
+          },
+          "cards_checked": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "customer_vault": {
+                "type": "object",
+                "properties": {
+                  "checked": {
+                    "type": "integer"
+                  },
+                  "updated": {
+                    "type": "integer"
+                  }
+                },
+                "additionalProperties": true
+              },
+              "subscriptions": {
+                "type": "object",
+                "properties": {
+                  "checked": {
+                    "type": "integer"
+                  },
+                  "updated": {
+                    "type": "integer"
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          },
+          "vault_updates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "customer_vault_id": {
+                  "type": "string",
+                  "description": "Customer Vault ID."
+                },
+                "billing_id": {
+                  "type": "string",
+                  "description": "Billing record ID."
+                },
+                "subscription_id": {
+                  "type": "string",
+                  "description": "Recurring subscription ID."
+                },
+                "cc_number": {
+                  "type": "string",
+                  "description": "Masked card number."
+                },
+                "cc_exp": {
+                  "type": "string",
+                  "description": "Updated expiration date."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "First name."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Last name."
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email address."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Phone number."
+                }
+              }
+            }
+          },
+          "recurring_updates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "customer_vault_id": {
+                  "type": "string",
+                  "description": "Customer Vault ID."
+                },
+                "billing_id": {
+                  "type": "string",
+                  "description": "Billing record ID."
+                },
+                "subscription_id": {
+                  "type": "string",
+                  "description": "Recurring subscription ID."
+                },
+                "cc_number": {
+                  "type": "string",
+                  "description": "Masked card number."
+                },
+                "cc_exp": {
+                  "type": "string",
+                  "description": "Updated expiration date."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "First name."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Last name."
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email address."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Phone number."
+                }
+              }
+            }
+          },
+          "vault_updated_cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "customer_vault_id": {
+                  "type": "string",
+                  "description": "Customer Vault ID."
+                },
+                "billing_id": {
+                  "type": "string",
+                  "description": "Billing record ID."
+                },
+                "subscription_id": {
+                  "type": "string",
+                  "description": "Recurring subscription ID."
+                },
+                "cc_number": {
+                  "type": "string",
+                  "description": "Masked card number."
+                },
+                "cc_exp": {
+                  "type": "string",
+                  "description": "Updated expiration date."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "First name."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Last name."
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email address."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Phone number."
+                }
+              }
+            }
+          },
+          "vault_updated_expiration_dates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "customer_vault_id": {
+                  "type": "string",
+                  "description": "Customer Vault ID."
+                },
+                "billing_id": {
+                  "type": "string",
+                  "description": "Billing record ID."
+                },
+                "subscription_id": {
+                  "type": "string",
+                  "description": "Recurring subscription ID."
+                },
+                "cc_number": {
+                  "type": "string",
+                  "description": "Masked card number."
+                },
+                "cc_exp": {
+                  "type": "string",
+                  "description": "Updated expiration date."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "First name."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Last name."
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email address."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Phone number."
+                }
+              }
+            }
+          },
+          "recurring_updated_cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "customer_vault_id": {
+                  "type": "string",
+                  "description": "Customer Vault ID."
+                },
+                "billing_id": {
+                  "type": "string",
+                  "description": "Billing record ID."
+                },
+                "subscription_id": {
+                  "type": "string",
+                  "description": "Recurring subscription ID."
+                },
+                "cc_number": {
+                  "type": "string",
+                  "description": "Masked card number."
+                },
+                "cc_exp": {
+                  "type": "string",
+                  "description": "Updated expiration date."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "First name."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Last name."
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email address."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Phone number."
+                }
+              }
+            }
+          },
+          "recurring_updated_expiration_dates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "customer_vault_id": {
+                  "type": "string",
+                  "description": "Customer Vault ID."
+                },
+                "billing_id": {
+                  "type": "string",
+                  "description": "Billing record ID."
+                },
+                "subscription_id": {
+                  "type": "string",
+                  "description": "Recurring subscription ID."
+                },
+                "cc_number": {
+                  "type": "string",
+                  "description": "Masked card number."
+                },
+                "cc_exp": {
+                  "type": "string",
+                  "description": "Updated expiration date."
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "First name."
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Last name."
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email address."
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Phone number."
+                }
+              }
+            }
+          }
+        }
+      },
+      "SettlementBatchCompleteWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "settlement.batch.complete"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/SettlementBatchCompleteWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "SettlementBatchFailureWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "settlement.batch.failure"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/SettlementBatchFailureWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "ChargebackBatchCompleteWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "chargeback.batch.complete"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/ChargebackBatchCompleteWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "TransactionSaleSuccessWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "transaction.sale.success"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/TransactionWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "TransactionCheckStatusSettleWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "transaction.check.status.settle"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/TransactionWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "TransactionCheckStatusReturnWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "transaction.check.status.return"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/TransactionWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "TransactionCheckStatusLatereturnWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "transaction.check.status.latereturn"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/TransactionWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "RecurringPlanAddWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "recurring.plan.add"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/RecurringPlanWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "RecurringPlanUpdateWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "recurring.plan.update"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/RecurringPlanWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "RecurringPlanDeleteWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "recurring.plan.delete"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/RecurringPlanWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "RecurringSubscriptionAddWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "recurring.subscription.add"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/RecurringSubscriptionWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "RecurringSubscriptionUpdateWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "recurring.subscription.update"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/RecurringSubscriptionWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "RecurringSubscriptionDeleteWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "recurring.subscription.delete"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/RecurringSubscriptionWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "AcuSummaryAutomaticallyupdatedWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "acu.summary.automaticallyupdated"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/AutomaticCardUpdaterWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "AcuSummaryClosedaccountWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "acu.summary.closedaccount"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/AutomaticCardUpdaterWebhookBody"
+              }
+            }
+          }
+        ]
+      },
+      "AcuSummaryContactcustomerWebhook": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WebhookEnvelope"
+          },
+          {
+            "type": "object",
+            "required": [
+              "event_type",
+              "event_body"
+            ],
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "const": "acu.summary.contactcustomer"
+              },
+              "event_body": {
+                "$ref": "#/components/schemas/AutomaticCardUpdaterWebhookBody"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

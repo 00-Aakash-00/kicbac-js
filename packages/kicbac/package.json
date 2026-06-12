@@ -1,0 +1,55 @@
+{
+  "name": "kicbac",
+  "version": "0.1.0",
+  "description": "Server SDK for the Kicbac payments gateway",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.19"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run --typecheck",
+    "test:watch": "vitest --typecheck",
+    "typecheck": "tsc --noEmit",
+    "check:package": "publint && attw --pack ."
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "catalog:",
+    "@types/node": "catalog:",
+    "msw": "catalog:",
+    "publint": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/00-Aakash-00/kicbac-js.git",
+    "directory": "packages/kicbac"
+  },
+  "bugs": {
+    "url": "https://github.com/00-Aakash-00/kicbac-js/issues"
+  },
+  "homepage": "https://github.com/00-Aakash-00/kicbac-js/tree/main/packages/kicbac#readme"
+}

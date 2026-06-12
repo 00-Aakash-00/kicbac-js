@@ -1,0 +1,21 @@
+{
+  "comment": "Shared contract between createKicbacRouteHandler (@kicbac/nextjs) and postToken (@kicbac/react). Both sides are asserted against these exact bodies.",
+  "success": {
+    "status": 200,
+    "body": {
+      "ok": true,
+      "transactionId": "1234560000",
+      "authCode": "123456",
+      "amount": "49.99",
+      "raw": { "response": "1", "responsetext": "SUCCESS", "transactionid": "1234560000" }
+    }
+  },
+  "decline": {
+    "status": 402,
+    "body": {
+      "ok": false,
+      "code": 200,
+      "message": "DECLINE"
+    }
+  }
+}

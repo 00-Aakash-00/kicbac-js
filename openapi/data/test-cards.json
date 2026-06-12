@@ -1,0 +1,19 @@
+{
+  "$comment": "Gateway test-mode credentials and cards. Sources: Kicbac-Collect-JS.pdf (test tokens), docs.nmi.com/reference/testing-methods.md.",
+  "cards": [
+    { "brand": "visa", "number": "4111111111111111", "expiry": "1029", "cvv": "999" },
+    { "brand": "mastercard", "number": "5431111111111111", "expiry": "1029", "cvv": "999" },
+    { "brand": "discover", "number": "6011000991300009", "expiry": "1029", "cvv": "999" },
+    { "brand": "amex", "number": "341111111111111", "expiry": "1029", "cvv": "9997" },
+    { "brand": "diners", "number": "30205252489926", "expiry": "1029", "cvv": "999" },
+    { "brand": "jcb", "number": "3541963594572595", "expiry": "1029", "cvv": "999" },
+    { "brand": "maestro", "number": "6799990100000000019", "expiry": "1029", "cvv": "999" }
+  ],
+  "ach": { "routing": "490000018", "account": "24413815", "name": "Jane Doe" },
+  "payment_tokens": {
+    "card": "00000000-000000-000000-000000000000",
+    "ach": "11111111-111111-111111-111111111111"
+  },
+  "avs_match": { "address1": "888", "zip": "77777" },
+  "cvv_match": "999"
+}

@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Package output
+dist/
+*.tgz
+
+# Build and test caches
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
