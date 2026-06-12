@@ -1,12 +1,12 @@
 /**
- * Types for the Collect.js global and the Kicbac wrapper around it.
+ * Types for the Kicbac.js global and the Kicbac wrapper around it.
  *
  * Every `CollectJS.configure` option name below is verified against the
- * Kicbac Collect.js PDF (Configuration Variables, pp. 19–28): the JS keys are
+ * Kicbac.js field reference (Configuration Variables, pp. 19–28): the JS keys are
  * the camelCase forms of the documented `data-*` attributes.
  */
 
-/** Inline field names supported by Collect.js (PDF pp. 16, 24–27). */
+/** Inline field names supported by Kicbac.js (PDF pp. 16, 24–27). */
 export type KicbacFieldName =
   | "ccnumber"
   | "ccexp"
@@ -127,7 +127,7 @@ declare global {
   }
 }
 
-/** Visual status of a single Collect.js field, derived from its events. */
+/** Visual status of a single Kicbac.js field, derived from its events. */
 export type KicbacFieldStatus = "untouched" | "empty" | "invalid" | "valid" | "focused";
 
 export interface KicbacFieldState {
@@ -136,18 +136,18 @@ export interface KicbacFieldState {
   focused: boolean;
   /** Whether the user has interacted with the field at least once. */
   touched: boolean;
-  /** Last validation result; `null` until Collect.js validates the field. */
+  /** Last validation result; `null` until Kicbac.js validates the field. */
   valid: boolean | null;
   /** Whether the field is empty (known after the first blur); `null` until then. */
   empty: boolean | null;
-  /** Validation message from Collect.js (empty string when none). */
+  /** Validation message from Kicbac.js (empty string when none). */
   message: string;
 }
 
 export type KicbacFieldsSnapshot = Partial<Record<KicbacFieldName, KicbacFieldState>>;
 
 export interface KicbacFieldMountOptions {
-  /** CSS selector for the container Collect.js injects the iframe into. */
+  /** CSS selector for the container Kicbac.js injects the iframe into. */
   selector: string;
   title?: string;
   placeholder?: string;
@@ -156,26 +156,26 @@ export interface KicbacFieldMountOptions {
 }
 
 export interface CreateFieldSessionOptions {
-  /** Fields to mount, keyed by Collect.js field name. */
+  /** Fields to mount, keyed by Kicbac.js field name. */
   fields: Partial<Record<KicbacFieldName, KicbacFieldMountOptions>>;
-  /** Appearance translated to Collect.js customCss/invalidCss/validCss/placeholderCss/focusCss. */
+  /** Appearance translated to Kicbac.js customCss/invalidCss/validCss/placeholderCss/focusCss. */
   appearance?: KicbacAppearance;
   /**
-   * Collect.js `timeoutDuration` in ms (default 10000). The session also arms
-   * a local grace timer of `timeoutDuration + 2000` ms in case Collect.js
+   * Kicbac.js `timeoutDuration` in ms (default 10000). The session also arms
+   * a local grace timer of `timeoutDuration + 2000` ms in case Kicbac.js
    * never calls back.
    */
   timeoutDuration?: number;
-  /** Collect.js style sniffer (default false — Kicbac ships designed styles). */
+  /** Kicbac.js style sniffer (default false — Kicbac ships designed styles). */
   styleSniffer?: boolean;
   /** Extra Google Font spec, e.g. "Inter:400,500,600" (auto-derived from appearance fontFamily). */
   googleFont?: string;
   /**
-   * Collect.js payment trigger selector. Defaults to a selector that matches
+   * Kicbac.js payment trigger selector. Defaults to a selector that matches
    * nothing — call `session.tokenize()` to start tokenization instead.
    */
   paymentSelector?: string;
-  /** Called once Collect.js has installed its iframes. */
+  /** Called once Kicbac.js has installed its iframes. */
   onReady?: () => void;
   /** Called whenever any field's state changes. */
   onChange?: (snapshot: KicbacFieldsSnapshot, isValid: boolean) => void;
@@ -186,7 +186,7 @@ export interface KicbacFieldSession {
   readonly fields: KicbacFieldsSnapshot;
   /** True once every mounted field has validated successfully. */
   readonly isValid: boolean;
-  /** True once Collect.js has installed its iframes. */
+  /** True once Kicbac.js has installed its iframes. */
   readonly isReady: boolean;
   /** True after `destroy()` was called. */
   readonly isDestroyed: boolean;
@@ -195,11 +195,11 @@ export interface KicbacFieldSession {
    * promise if called again while tokenizing (double-submit guard).
    */
   tokenize(): Promise<CollectJSResponse>;
-  /** Clear everything the user typed into the Collect.js fields. */
+  /** Clear everything the user typed into the Kicbac.js fields. */
   clearInputs(): void;
   /**
    * Tear the session down. Idempotent; synchronously frees the page's single
-   * Collect.js session slot and cancels an in-flight `tokenize()`.
+   * Kicbac.js session slot and cancels an in-flight `tokenize()`.
    */
   destroy(): void;
 }
@@ -210,14 +210,14 @@ export interface KicbacClient {
   /** The tokenization key the script was loaded with. */
   readonly tokenizationKey: string;
   /**
-   * Mount Collect.js fields and get a tokenization session. Collect.js is a
+   * Mount Kicbac.js fields and get a tokenization session. Kicbac.js is a
    * page-wide singleton, so only one session may exist at a time.
    */
   createFieldSession(options: CreateFieldSessionOptions): KicbacFieldSession;
 }
 
 export interface LoadKicbacOptions {
-  /** Override the Collect.js script URL (defaults to the Kicbac gateway). */
+  /** Override the Kicbac.js script URL (defaults to the Kicbac gateway). */
   scriptUrl?: string;
   /** CSP nonce applied to the injected script tag. */
   nonce?: string;
@@ -273,7 +273,7 @@ export type KicbacElementKey =
 
 export type KicbacAppearanceElements = Partial<Record<KicbacElementKey, string>>;
 
-/** Raw Collect.js CSS overrides; non-allowlisted properties are dropped silently. */
+/** Raw Kicbac.js CSS overrides; non-allowlisted properties are dropped silently. */
 export interface KicbacCollectCssOverrides {
   customCss?: Record<string, string>;
   invalidCss?: Record<string, string>;

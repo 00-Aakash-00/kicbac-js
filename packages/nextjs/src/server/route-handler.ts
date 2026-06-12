@@ -177,7 +177,7 @@ export function createKicbacRouteHandler(options: CreateKicbacRouteHandlerOption
     const token = raw["token"];
     if (typeof token !== "string" || token.length === 0) {
       return invalidRequest(
-        "Missing payment token. POST { token } from the Kicbac payment form (Collect.js).",
+        "Missing payment token. POST { token } from the Kicbac payment form (Kicbac.js).",
       );
     }
     // Never accept (or echo) anything that looks like a raw card number.
@@ -185,7 +185,7 @@ export function createKicbacRouteHandler(options: CreateKicbacRouteHandlerOption
       return invalidRequest(
         "The submitted token looks like a raw card number. Raw card data must never " +
           "reach your server — tokenize in the browser with the Kicbac payment form " +
-          "(Collect.js) and send the resulting payment token.",
+          "(Kicbac.js) and send the resulting payment token.",
       );
     }
 

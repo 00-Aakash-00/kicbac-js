@@ -58,14 +58,5 @@
     "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/00-Aakash-00/kicbac-js.git",
-    "directory": "packages/react"
-  },
-  "bugs": {
-    "url": "https://github.com/00-Aakash-00/kicbac-js/issues"
-  },
-  "homepage": "https://github.com/00-Aakash-00/kicbac-js/tree/main/packages/react#readme"
+  }
 }

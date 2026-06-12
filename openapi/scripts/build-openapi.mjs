@@ -475,10 +475,10 @@ for (const eventType of [
 const spec = {
   openapi: "3.1.0",
   info: {
-    title: "Kicbac Gateway API",
+    title: "Kicbac Payment API",
     version: "2026-06-12",
     description:
-      "Classic form-encoded Kicbac gateway API, Collect.js tokenized payment fields, Query API reporting, and webhook delivery contracts."
+      "Form-encoded Kicbac Payment API, Kicbac.js tokenized payment fields, reporting API, and webhook delivery contracts."
   },
   servers: [
     {
@@ -498,7 +498,7 @@ const spec = {
         operationId: "submitTransaction",
         summary: "Submit a gateway operation",
         description:
-          "Use this endpoint for sales, authorizations, captures, voids, refunds, Customer Vault operations, recurring plans/subscriptions, and invoices. Tokenize browser payment details with Collect.js and send payment_token; do not post raw PAN/CVV from merchant servers.",
+          "Use this endpoint for sales, authorizations, captures, voids, refunds, Customer Vault operations, recurring plans/subscriptions, and invoices. Tokenize browser payment details with Kicbac.js and send payment_token; do not post raw PAN/CVV from merchant servers.",
         requestBody: {
           required: true,
           content: {
@@ -506,7 +506,7 @@ const spec = {
               schema: { $ref: "#/components/schemas/TransactRequest" },
               examples: {
                 saleWithPaymentToken: {
-                  summary: "Card sale with a Collect.js test token",
+                  summary: "Card sale with a Kicbac test token",
                   value: {
                     security_key: "test_security_key",
                     type: "sale",
@@ -516,7 +516,7 @@ const spec = {
                   }
                 },
                 achSaleWithPaymentToken: {
-                  summary: "ACH sale with a Collect.js test token",
+                  summary: "ACH sale with a Kicbac test token",
                   value: {
                     security_key: "test_security_key",
                     type: "sale",
@@ -671,7 +671,7 @@ const spec = {
           }),
           payment: stringField("Payment rail selector.", { enum: ["creditcard", "check", "cash", ""] }),
           amount: money,
-          payment_token: stringField("Single-use Collect.js token. Preferred for card and ACH payments.", {
+          payment_token: stringField("Single-use Kicbac payment token. Preferred for card and ACH payments.", {
             examples: [testCards.payment_tokens.card, testCards.payment_tokens.ach]
           }),
           customer_vault_id: stringField("Customer Vault customer identifier."),
@@ -705,8 +705,8 @@ const spec = {
           shipping_state: stringField("Shipping state."),
           shipping_zip: stringField("Shipping ZIP/postal code."),
           shipping_country: stringField("Shipping country."),
-          checkaba: stringField("ACH routing number. Prefer Collect.js ACH tokens when collecting in browser."),
-          checkaccount: stringField("ACH account number. Prefer Collect.js ACH tokens when collecting in browser."),
+          checkaba: stringField("ACH routing number. Prefer Kicbac.js ACH tokens when collecting in browser."),
+          checkaccount: stringField("ACH account number. Prefer Kicbac.js ACH tokens when collecting in browser."),
           checkname: stringField("ACH account holder name."),
           account_holder_type: stringField("ACH account holder type.", { enum: ["personal", "business", ""] }),
           account_type: stringField("ACH account type.", { enum: ["checking", "savings", ""] }),

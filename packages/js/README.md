@@ -1,7 +1,7 @@
 # @kicbac/js
 
 Browser tokenization for the Kicbac payments gateway — a tiny, dependency-free
-loader and typed wrapper around Collect.js (the gateway's hosted-iframe
+loader and typed wrapper around Kicbac.js (the gateway's hosted-iframe
 tokenizer). Card data never touches your code: fields render inside gateway
 iframes and you receive a single-use `payment_token`.
 
@@ -19,7 +19,7 @@ npm install @kicbac/js
 ```ts
 import { loadKicbac } from "@kicbac/js";
 
-// Loads Collect.js once (SSR-safe: resolves null on the server).
+// Loads Kicbac.js once (SSR-safe: resolves null on the server).
 // Key defaults to NEXT_PUBLIC_KICBAC_TOKENIZATION_KEY / VITE_KICBAC_TOKENIZATION_KEY.
 const kicbac = await loadKicbac("your-tokenization-key");
 
@@ -43,7 +43,7 @@ session.destroy();
 
 Notes:
 
-- Collect.js is a page singleton — one field session at a time
+- Kicbac.js is a page singleton — one field session at a time
   (`session_conflict` otherwise). Tokens are single-use: after a decline,
   call `tokenize()` again.
 - The **appearance API** (`appearanceToCollectCss`, `appearanceToCssVars`)
@@ -51,4 +51,4 @@ Notes:
   CSS plus `--kb-*` custom properties for your own chrome. Prebuilt themes
   live in `@kicbac/themes`.
 - For tests, `@kicbac/js/testing` ships `installMockCollectJS()` — a full
-  offline mock of the Collect.js global.
+  offline mock of the Kicbac.js global.

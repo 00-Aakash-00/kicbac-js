@@ -5,7 +5,7 @@ be SSR-safe (no `window` at module scope; renderToString is tested).
 
 ## Layout
 
-- `src/provider.tsx` — `KicbacProvider` (loads Collect.js in an effect,
+- `src/provider.tsx` — `KicbacProvider` (loads Kicbac.js in an effect,
   injects styles) + `useKicbac` tri-state. Missing key / load failure NEVER
   throws in render — it becomes `loadError`.
 - `src/use-payment-form.ts` — the engine: registers field mounts
@@ -30,7 +30,7 @@ be SSR-safe (no `window` at module scope; renderToString is tested).
 
 ## Rules
 
-- Collect.js sessions configure ONCE — never reconfigure on prop change
+- Kicbac.js sessions configure ONCE — never reconfigure on prop change
   (appearance changes need a remount; document, don't "fix").
 - `treeshake` must stay OFF in tsup: the rollup pass strips the
   `"use client"` banner.

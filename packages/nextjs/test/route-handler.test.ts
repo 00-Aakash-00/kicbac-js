@@ -100,7 +100,7 @@ describe("request validation", () => {
     expect(sale).not.toHaveBeenCalled();
   });
 
-  it("accepts a real Collect.js-style token (letters + dashes)", async () => {
+  it("accepts a real Kicbac.js-style token (letters + dashes)", async () => {
     const { client, sale } = stubClient(APPROVED);
     const { POST } = createKicbacRouteHandler({ client, amount: "10.00" });
     const res = await POST(chargeRequest({ token: "3455zJms-7qA2K2-VdVrSu-Rv7WpvPuG7s8" }));

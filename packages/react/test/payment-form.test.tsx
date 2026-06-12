@@ -40,7 +40,7 @@ function renderForm(
 }
 
 describe("KicbacPaymentForm full flow", () => {
-  it("renders skeletons while loading, then live fields once Collect.js is ready", async () => {
+  it("renders skeletons while loading, then live fields once Kicbac.js is ready", async () => {
     const { container } = renderForm();
     expect(container.querySelectorAll(".kb-skeleton").length).toBeGreaterThan(0);
     await fieldsReady(mock);
@@ -247,7 +247,7 @@ describe("unmount mid-tokenize", () => {
     expect(mock.startPaymentRequestCalls).toBe(1);
 
     unmount();
-    // Late Collect.js callback after unmount must be dropped silently.
+    // Late Kicbac.js callback after unmount must be dropped silently.
     mock.resolveToken();
     await act(async () => {
       await Promise.resolve();
@@ -315,7 +315,7 @@ describe("fatal load failure: consumer-safe status panel", () => {
 
   it("a transient script failure offers a working Try again that recovers to live fields", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    // Start with no Collect.js global so the loader injects a script we can fail.
+    // Start with no Kicbac.js global so the loader injects a script we can fail.
     delete window.CollectJS;
     resetKicbacForTests();
 

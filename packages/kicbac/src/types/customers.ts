@@ -3,7 +3,7 @@ import type { DescriptorFields, StoredCredentialFields } from "./transactions";
 
 /** Payment methods accepted when creating/updating a vault record. */
 export interface VaultPaymentFields {
-  /** Single-use Collect.js token — the recommended method. */
+  /** Single-use Kicbac.js token — the recommended method. */
   paymentToken?: string;
   card?: CardDetails;
   check?: CheckDetails;

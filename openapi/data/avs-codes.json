@@ -1,5 +1,5 @@
 {
-  "$comment": "AVS response codes. Source: Kicbac-Direct-Post-API.pdf AVS appendix / docs.nmi.com response codes reference.",
+  "$comment": "AVS response codes. Source: Kicbac Payment API reference (AVS appendix).",
   "codes": {
     "X": "Exact match, 9-character numeric ZIP",
     "Y": "Exact match, 5-character numeric ZIP",

@@ -54,7 +54,7 @@ export interface UsePaymentFormReturn {
   /** Clear inputs and return to `ready`. */
   reset: () => void;
   /**
-   * Register a Collect.js field and get the mount-point props for its host
+   * Register a Kicbac.js field and get the mount-point props for its host
    * element: `<div {...getFieldProps("ccnumber")} />`. Must be rendered
    * before the session is created (i.e. during the initial mount).
    */
@@ -107,7 +107,7 @@ function toFormError(error: unknown): KicbacFormError {
 }
 
 /**
- * Headless payment form: mounts Collect.js fields via `getFieldProps`, tracks
+ * Headless payment form: mounts Kicbac.js fields via `getFieldProps`, tracks
  * the status machine, validates, tokenizes and (unless `onToken` is set)
  * POSTs the token to the charge endpoint.
  */

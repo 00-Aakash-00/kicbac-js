@@ -1,7 +1,7 @@
 # @kicbac/react
 
 React components and hooks for Kicbac payments: a drop-in, branded payment
-form built on the gateway's hosted iframes (Collect.js). Card data never
+form built on the gateway's hosted iframes (Kicbac.js). Card data never
 touches your code — you get a single-use token, your server charges it.
 
 Using Next.js? Install [`@kicbac/nextjs`](../nextjs) instead — it re-exports
@@ -97,5 +97,5 @@ either `<KicbacPaymentForm>` or your own `usePaymentForm` via the `form` prop.
 
 ```ts
 import { installMockCollectJS } from "@kicbac/js/testing";
-const mock = installMockCollectJS();   // offline Collect.js mock
+const mock = installMockCollectJS();   // offline Kicbac.js mock
 ```

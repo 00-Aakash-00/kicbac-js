@@ -55,7 +55,7 @@ function errorMessage(error: KicbacFormError | null): string {
 /**
  * The complete, branded Kicbac checkout form: card fields with validation
  * states, a gradient pay button with loading/success states, and inline error
- * display. Tokenizes with Collect.js, then POSTs the token to your endpoint.
+ * display. Tokenizes with Kicbac.js, then POSTs the token to your endpoint.
  *
  * ```tsx
  * <KicbacPaymentForm amount="49.99" onSuccess={(p) => router.push(`/thanks?id=${p.transactionId}`)} />

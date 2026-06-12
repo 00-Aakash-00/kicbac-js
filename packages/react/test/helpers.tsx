@@ -3,7 +3,7 @@ import type { MockCollectJS } from "@kicbac/js/testing";
 
 export const TEST_KEY = "test-tokenization-key";
 
-/** Wait until the form's Collect.js session has configured the mock. */
+/** Wait until the form's Kicbac.js session has configured the mock. */
 export async function waitForConfigure(mock: MockCollectJS, count = 1): Promise<void> {
   await waitFor(() => {
     if (mock.configureCalls.length < count) throw new Error("configure not called yet");

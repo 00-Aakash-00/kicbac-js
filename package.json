@@ -1,5 +1,5 @@
 {
-  "name": "kicbac-js",
+  "name": "kicbac-monorepo",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "engines": {
@@ -18,15 +18,5 @@
     "@changesets/cli": "^2.31.0",
     "turbo": "^2.9.18",
     "typescript": "catalog:"
-  },
-  "description": "Official JavaScript and TypeScript SDK packages for Kicbac payments.",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/00-Aakash-00/kicbac-js.git"
-  },
-  "bugs": {
-    "url": "https://github.com/00-Aakash-00/kicbac-js/issues"
-  },
-  "homepage": "https://github.com/00-Aakash-00/kicbac-js#readme"
+  }
 }

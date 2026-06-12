@@ -9,7 +9,7 @@ This repository contains the npm packages used to build tokenized browser paymen
 | Package | Purpose |
 | --- | --- |
 | `kicbac` | Node.js server SDK for transactions, Customer Vault, recurring billing, Query API, and webhooks. |
-| `@kicbac/js` | Dependency-free Collect.js loader and typed hosted-field session wrapper. |
+| `@kicbac/js` | Dependency-free Kicbac.js loader and typed hosted-field session wrapper. |
 | `@kicbac/react` | React provider, hooks, fields, and payment form built on hosted iframes. |
 | `@kicbac/nextjs` | React exports plus web-standard Next.js route handlers for charges and webhooks. |
 | `@kicbac/themes` | Serializable appearance presets for Kicbac payment components. |
@@ -26,7 +26,7 @@ Use `@kicbac/nextjs` for Next.js apps, `@kicbac/react` for React apps with your 
 
 ## Core safety model
 
-- Card and bank details are tokenized in gateway-hosted Collect.js iframes.
+- Card and bank details are tokenized in gateway-hosted Kicbac.js iframes.
 - Your server should receive only a `payment_token`, never raw PAN, CVV, routing, or bank account values.
 - Gateway HTTP responses are usually `200`; inspect the gateway `response` field.
 - `response=1` is approved, `response=2` is a typed decline result, and `response=3` throws an SDK error.

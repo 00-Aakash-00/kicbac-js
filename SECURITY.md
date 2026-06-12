@@ -23,7 +23,7 @@ Do not open a public issue for suspected vulnerabilities. Email the Kicbac maint
 
 ## Handling payment data
 
-- Tokenize cards and bank accounts with Collect.js. Do not post raw PAN, CVV, routing, or account values to your server.
+- Tokenize cards and bank accounts with Kicbac.js. Do not post raw PAN, CVV, routing, or account values to your server.
 - Store Kicbac security keys only in server-side secret stores.
 - Verify webhooks with `Webhook-Signature: t=<nonce>,s=<sig>` using HMAC-SHA256 over `nonce + "." + rawBody`, compared constant-time.
 - Treat `response=2` as a typed decline result, not an exception. Treat `response=3` as an error path.

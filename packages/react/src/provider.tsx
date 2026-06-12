@@ -12,12 +12,12 @@ import type { KicbacAppearance, KicbacClient, LoadKicbacOptions } from "@kicbac/
 import { injectKicbacStyles } from "./styles/inject.js";
 
 export interface KicbacContextValue {
-  /** True once Collect.js has loaded (Clerk-style tri-state with `loadError`). */
+  /** True once Kicbac.js has loaded (Clerk-style tri-state with `loadError`). */
   isLoaded: boolean;
   kicbac: KicbacClient | null;
   loadError: KicbacLoadError | null;
   appearance: KicbacAppearance | undefined;
-  /** Re-attempt loading Collect.js after a transient failure (powers retry). */
+  /** Re-attempt loading Kicbac.js after a transient failure (powers retry). */
   reload: () => void;
 }
 
@@ -31,7 +31,7 @@ export interface KicbacProviderProps {
   tokenizationKey?: string;
   /** Default appearance for every Kicbac component below this provider. */
   appearance?: KicbacAppearance;
-  /** Override the Collect.js script URL. */
+  /** Override the Kicbac.js script URL. */
   scriptUrl?: string;
   /** CSP nonce for the injected script and style tags. */
   nonce?: string;
@@ -41,7 +41,7 @@ export interface KicbacProviderProps {
 }
 
 /**
- * Loads Collect.js and provides the Kicbac client to the component tree.
+ * Loads Kicbac.js and provides the Kicbac client to the component tree.
  * A missing key or load failure never throws during render — it surfaces as
  * `useKicbac().loadError` and as the payment form's load error state.
  */
@@ -85,7 +85,7 @@ export function KicbacProvider(props: KicbacProviderProps): ReactNode {
         // Surface the real cause to developers — the shopper sees only the
         // branded fallback panel, so this console line is their one signal.
         // eslint-disable-next-line no-console
-        console.error(`[kicbac] Collect.js failed to load (${loadFailure.code}): ${loadFailure.message}`);
+        console.error(`[kicbac] Kicbac.js failed to load (${loadFailure.code}): ${loadFailure.message}`);
         setLoadError(loadFailure);
       },
     );
@@ -115,7 +115,7 @@ export function useKicbacContext(): KicbacContextValue {
 }
 
 /**
- * Tri-state Collect.js loading status plus a `reload()` to re-attempt loading
+ * Tri-state Kicbac.js loading status plus a `reload()` to re-attempt loading
  * after a transient failure: `{ isLoaded, kicbac, loadError, reload }`.
  */
 export function useKicbac(): Pick<

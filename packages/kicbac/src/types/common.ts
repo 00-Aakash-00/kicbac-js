@@ -90,7 +90,7 @@ export interface ShippingAddress {
   fax?: string;
 }
 
-/** Keyed manual card entry. Prefer Collect.js payment tokens in production. */
+/** Keyed manual card entry. Prefer Kicbac.js payment tokens in production. */
 export interface CardDetails {
   /** Card number (PAN). Never logged; redacted everywhere. */
   number: string;

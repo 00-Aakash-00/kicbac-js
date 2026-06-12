@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Kicbac Gateway API",
+    "title": "Kicbac Payment API",
     "version": "2026-06-12",
-    "description": "Classic form-encoded Kicbac gateway API, Collect.js tokenized payment fields, Query API reporting, and webhook delivery contracts."
+    "description": "Form-encoded Kicbac Payment API, Kicbac.js tokenized payment fields, reporting API, and webhook delivery contracts."
   },
   "servers": [
     {
@@ -33,7 +33,7 @@
         ],
         "operationId": "submitTransaction",
         "summary": "Submit a gateway operation",
-        "description": "Use this endpoint for sales, authorizations, captures, voids, refunds, Customer Vault operations, recurring plans/subscriptions, and invoices. Tokenize browser payment details with Collect.js and send payment_token; do not post raw PAN/CVV from merchant servers.",
+        "description": "Use this endpoint for sales, authorizations, captures, voids, refunds, Customer Vault operations, recurring plans/subscriptions, and invoices. Tokenize browser payment details with Kicbac.js and send payment_token; do not post raw PAN/CVV from merchant servers.",
         "requestBody": {
           "required": true,
           "content": {
@@ -43,7 +43,7 @@
               },
               "examples": {
                 "saleWithPaymentToken": {
-                  "summary": "Card sale with a Collect.js test token",
+                  "summary": "Card sale with a Kicbac test token",
                   "value": {
                     "security_key": "test_security_key",
                     "type": "sale",
@@ -53,7 +53,7 @@
                   }
                 },
                 "achSaleWithPaymentToken": {
-                  "summary": "ACH sale with a Collect.js test token",
+                  "summary": "ACH sale with a Kicbac test token",
                   "value": {
                     "security_key": "test_security_key",
                     "type": "sale",
@@ -734,7 +734,7 @@
           },
           "payment_token": {
             "type": "string",
-            "description": "Single-use Collect.js token. Preferred for card and ACH payments.",
+            "description": "Single-use Kicbac payment token. Preferred for card and ACH payments.",
             "examples": [
               "00000000-000000-000000-000000000000",
               "11111111-111111-111111-111111111111"
@@ -867,11 +867,11 @@
           },
           "checkaba": {
             "type": "string",
-            "description": "ACH routing number. Prefer Collect.js ACH tokens when collecting in browser."
+            "description": "ACH routing number. Prefer Kicbac.js ACH tokens when collecting in browser."
           },
           "checkaccount": {
             "type": "string",
-            "description": "ACH account number. Prefer Collect.js ACH tokens when collecting in browser."
+            "description": "ACH account number. Prefer Kicbac.js ACH tokens when collecting in browser."
           },
           "checkname": {
             "type": "string",

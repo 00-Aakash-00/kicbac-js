@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Node ${{ matrix.node }}
+  js:
+    name: JS (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -25,12 +25,16 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run build
-      - run: pnpm turbo run typecheck
-      - run: pnpm turbo run test
+      - run: pnpm -r run build
+      - run: pnpm -r run typecheck
+      - run: pnpm -r run test
+      - name: Webhook vectors are reproducible
+        run: |
+          node openapi/scripts/make-vectors.mjs
+          git diff --exit-code openapi/webhooks/vectors.json
 
   package-checks:
-    name: Packaging
+    name: Packaging (publint + are-the-types-wrong)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,19 +44,27 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run build
+      - run: pnpm -r run build
       - run: pnpm -r --filter "./packages/*" run check:package
 
-  fixtures:
-    name: Shared fixtures
+  python:
+    name: Python ${{ matrix.python }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: sdk-python
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-python@v5
         with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: node openapi/scripts/make-vectors.mjs
-      - run: git diff --exit-code openapi/webhooks/vectors.json
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: mypy --strict src
+      - run: pytest
+      - run: python -m build

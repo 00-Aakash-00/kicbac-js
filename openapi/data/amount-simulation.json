@@ -1,5 +1,5 @@
 {
-  "$comment": "Test-mode amount-driven response simulation. Source: docs.nmi.com/reference/testing-methods.md (any valid test card approves; amounts below 1.00 decline; invalid card numbers produce a fatal error). Shared fixture: both SDK sandbox suites assert these decode identically.",
+  "$comment": "Test-mode amount-driven response simulation. Source: Kicbac test-mode reference (any valid test card approves; amounts below 1.00 decline; invalid card numbers produce a fatal error). Shared fixture: both SDK sandbox suites assert these decode identically.",
   "cases": [
     { "amount": "1.00", "expect_response": 1, "expect_code": 100, "description": "Amounts >= 1.00 approve in test mode" },
     { "amount": "49.99", "expect_response": 1, "expect_code": 100, "description": "Typical approval" },

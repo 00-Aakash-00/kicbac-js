@@ -1,4 +1,4 @@
-/** Error codes thrown while loading the Collect.js script. */
+/** Error codes thrown while loading the Kicbac.js script. */
 export type KicbacLoadErrorCode =
   | "missing_key"
   | "key_mismatch"
@@ -20,7 +20,7 @@ export class KicbacError extends Error {
   }
 }
 
-/** Thrown when the Collect.js script cannot be loaded or initialized. */
+/** Thrown when the Kicbac.js script cannot be loaded or initialized. */
 export class KicbacLoadError extends KicbacError {
   override readonly name: string = "KicbacLoadError";
   declare readonly code: KicbacLoadErrorCode;

@@ -31,7 +31,7 @@ function isProduction(): boolean {
 
 /**
  * The branded, consumer-safe fallback shown when the payment form cannot
- * mount its secure fields (missing key, blocked/failed Collect.js script…).
+ * mount its secure fields (missing key, blocked/failed Kicbac.js script…).
  * Replaces the input fields entirely so shoppers never see empty boxes or
  * developer error text. The real cause is surfaced to developers via a
  * dev-only note and `console.error` (in the provider).

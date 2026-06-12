@@ -2,13 +2,21 @@
 // verification, consumed by BOTH the Node and Python SDK test suites.
 // Deterministic: fixed signing keys and nonces. Run: node openapi/scripts/make-vectors.mjs
 import { createHmac } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const examplePath = process.env.KICBAC_WEBHOOK_EXAMPLE ?? "";
-const existingVectorsPath = join(here, "..", "webhooks", "vectors.json");
+const repoRoot = join(here, "..", "..");
+const examplePath = join(
+  repoRoot,
+  "..",
+  "Kicbac_API_Docs",
+  "Webhooks",
+  "Examples",
+  "Transaction",
+  "transaction.sale.success.txt",
+);
 
 const SIGNING_KEY = "whsec_test_kicbac_8675309";
 const WRONG_KEY = "whsec_wrong_key_0000000";
@@ -55,16 +63,8 @@ function extractJsonObject(text) {
   throw new Error("no balanced JSON object found");
 }
 
-const realPayload = examplePath && existsSync(examplePath)
-  ? JSON.parse(extractJsonObject(readFileSync(examplePath, "utf8")))
-  : JSON.parse(
-      Buffer.from(
-        JSON.parse(readFileSync(existingVectorsPath, "utf8")).vectors.find(
-          (item) => item.name === "valid-real-transaction-sale-success",
-        ).payload_base64,
-        "base64",
-      ).toString("utf8"),
-    );
+const exampleRaw = readFileSync(examplePath, "utf8");
+const realPayload = JSON.parse(extractJsonObject(exampleRaw));
 if (realPayload.event_type !== "transaction.sale.success") {
   throw new Error("unexpected example payload");
 }
@@ -221,7 +221,7 @@ vectors.push(
 );
 
 const out = { version: 1, signing_key: SIGNING_KEY, vectors };
-const outPath = existingVectorsPath;
+const outPath = join(repoRoot, "openapi", "webhooks", "vectors.json");
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
 console.log(`wrote ${outPath} (${vectors.length} vectors)`);

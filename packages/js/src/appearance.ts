@@ -6,8 +6,8 @@ import type {
 } from "./types.js";
 
 /**
- * CSS properties Collect.js accepts for customCss/invalidCss/validCss/focusCss
- * (verified verbatim against the Kicbac Collect.js PDF, "Styling Limitations",
+ * CSS properties Kicbac.js accepts for customCss/invalidCss/validCss/focusCss
+ * (verified verbatim against the Kicbac.js field reference, "Styling Limitations",
  * pp. 30–32). Anything else is silently ignored by the gateway, so we drop it
  * here for predictability.
  */
@@ -128,7 +128,7 @@ export const DEFAULT_APPEARANCE_VARIABLES: Required<KicbacAppearanceVariables> =
     "linear-gradient(280deg, #f8b345 -25%, #f23fe5 34.64%, #ad4ef8 62.57%, #6dacff 109%)",
 };
 
-/** Google-hosted families we can load via Collect.js `googleFont`. */
+/** Google-hosted families we can load via Kicbac.js `googleFont`. */
 const KNOWN_GOOGLE_FONTS = new Set(
   [
     "Inter",
@@ -246,7 +246,7 @@ function mergeOverride(
 }
 
 /**
- * Translate a `KicbacAppearance` into the five Collect.js CSS objects (plus a
+ * Translate a `KicbacAppearance` into the five Kicbac.js CSS objects (plus a
  * derived `googleFont`). Values are resolved to literals — the gateway's
  * iframes cannot inherit the host page's CSS custom properties.
  */

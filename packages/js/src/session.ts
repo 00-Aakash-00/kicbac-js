@@ -21,7 +21,7 @@ const FIELD_NAMES: readonly KicbacFieldName[] = [
   "checkaba",
 ];
 
-/** Collect.js sometimes reports abbreviated field names — normalize defensively. */
+/** Kicbac.js sometimes reports abbreviated field names — normalize defensively. */
 const FIELD_ALIASES: Record<string, KicbacFieldName> = {
   ccnum: "ccnumber",
   cc_number: "ccnumber",
@@ -40,9 +40,9 @@ const DEFAULT_TIMEOUT_DURATION = 10_000;
 const GRACE_TIMER_PADDING = 2_000;
 
 /**
- * Collect.js is a page-wide singleton with no teardown API: `configure()`
+ * Kicbac.js is a page-wide singleton with no teardown API: `configure()`
  * re-draws every iframe and wipes user input. We therefore allow exactly one
- * live session, and route Collect.js callbacks through a generation counter
+ * live session, and route Kicbac.js callbacks through a generation counter
  * so callbacks belonging to destroyed sessions are dropped silently.
  */
 let activeSession: FieldSession | null = null;
@@ -113,7 +113,7 @@ class FieldSession implements KicbacFieldSession {
     return this.mountedFields.every((name) => this.fields[name]?.valid === true);
   }
 
-  /** True while this session still owns the page's Collect.js singleton. */
+  /** True while this session still owns the page's Kicbac.js singleton. */
   private get isCurrent(): boolean {
     return generation === this.generation && !this.isDestroyed;
   }
@@ -136,7 +136,7 @@ class FieldSession implements KicbacFieldSession {
     return {
       variant: "inline",
       styleSniffer: this.options.styleSniffer ?? false,
-      // We trigger tokenization via tokenize() — point Collect.js at a
+      // We trigger tokenization via tokenize() — point Kicbac.js at a
       // selector that never matches so it doesn't bind its own click handler.
       paymentSelector: this.options.paymentSelector ?? ".kb-collectjs-detached",
       timeoutDuration: this.timeoutDuration,
@@ -160,7 +160,7 @@ class FieldSession implements KicbacFieldSession {
         this.failTokenize(
           new KicbacTokenizationError(
             "tokenization_timeout",
-            `Collect.js did not finish tokenizing within ${this.timeoutDuration}ms. ` +
+            `Kicbac.js did not finish tokenizing within ${this.timeoutDuration}ms. ` +
               "Check the card details and try again.",
           ),
         );
@@ -272,13 +272,13 @@ class FieldSession implements KicbacFieldSession {
       resolve = res;
       reject = rej;
     });
-    // Local safety net in case Collect.js never invokes callback OR
+    // Local safety net in case Kicbac.js never invokes callback OR
     // timeoutCallback (e.g. an iframe was removed from the DOM).
     const graceTimer = setTimeout(() => {
       this.failTokenize(
         new KicbacTokenizationError(
           "tokenization_timeout",
-          "Collect.js never completed the payment request. The payment fields may " +
+          "Kicbac.js never completed the payment request. The payment fields may " +
             "have been removed from the page, or the gateway is unreachable.",
         ),
       );
@@ -301,7 +301,7 @@ class FieldSession implements KicbacFieldSession {
   destroy(): void {
     if (this.isDestroyed) return;
     this.isDestroyed = true;
-    // Bump the generation so late Collect.js callbacks are dropped, and free
+    // Bump the generation so late Kicbac.js callbacks are dropped, and free
     // the singleton slot synchronously (StrictMode destroy→recreate).
     generation += 1;
     if (activeSession === this) activeSession = null;
@@ -321,7 +321,7 @@ export function createFieldSession(
   if (activeSession) {
     throw new KicbacError(
       "session_conflict",
-      "Collect.js supports a single payment form per page, and another Kicbac field " +
+      "Kicbac.js supports a single payment form per page, and another Kicbac field " +
         "session is already active. Destroy the existing session (unmount the other " +
         "payment form) before creating a new one.",
     );

@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 describe("KicbacProvider", () => {
-  it("tri-state: starts not loaded, becomes loaded once Collect.js is available", async () => {
+  it("tri-state: starts not loaded, becomes loaded once Kicbac.js is available", async () => {
     mock = installMockCollectJS();
     render(
       <KicbacProvider tokenizationKey={TEST_KEY}>

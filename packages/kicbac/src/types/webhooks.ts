@@ -1,6 +1,6 @@
 /**
  * Webhook event types and bodies. Event bodies stay snake_case, mirroring the
- * gateway payloads byte-for-byte. Every
+ * gateway payloads byte-for-byte (`Kicbac_API_Docs/Webhooks/Examples`). Every
  * body keeps an `unknown` index signature: the gateway adds fields over time.
  */
 

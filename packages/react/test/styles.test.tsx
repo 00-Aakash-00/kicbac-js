@@ -114,7 +114,7 @@ describe("appearance plumbing", () => {
     expect(root.style.getPropertyValue("--kb-radius")).toBe("10px");
   });
 
-  it("appearance variables drive the Collect.js configure CSS", async () => {
+  it("appearance variables drive the Kicbac.js configure CSS", async () => {
     render(
       <KicbacProvider tokenizationKey={TEST_KEY}>
         <KicbacPaymentForm amount="10.00" appearance={{ variables: { colorText: "#0000aa" } }} />

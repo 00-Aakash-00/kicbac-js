@@ -67,12 +67,12 @@ describe("loadKicbac", () => {
   });
 
   it("rejects key_mismatch when a later call passes a different scriptUrl", async () => {
-    const first = loadKicbac(KEY, { scriptUrl: "https://a.example.com/Collect.js" });
+    const first = loadKicbac(KEY, { scriptUrl: "https://a.example.com/Kicbac.js" });
     await expect(
-      loadKicbac(KEY, { scriptUrl: "https://b.example.com/Collect.js" }),
+      loadKicbac(KEY, { scriptUrl: "https://b.example.com/Kicbac.js" }),
     ).rejects.toMatchObject({ code: "key_mismatch" });
     // Same key + same scriptUrl still dedupes to the cached promise.
-    expect(loadKicbac(KEY, { scriptUrl: "https://a.example.com/Collect.js" })).toBe(first);
+    expect(loadKicbac(KEY, { scriptUrl: "https://a.example.com/Kicbac.js" })).toBe(first);
     stubCollectJS();
     getScripts()[0]!.dispatchEvent(new Event("load"));
     await first;

@@ -28,7 +28,7 @@ git diff --exit-code openapi/webhooks/vectors.json
 ## API and PCI rules
 
 - Do not add server-side examples that accept raw card numbers, CVV, routing numbers, or bank account numbers.
-- Use Collect.js tokenization and pass `paymentToken` to the server SDK.
+- Use Kicbac.js tokenization and pass `paymentToken` to the server SDK.
 - Keep `transact.php` retry behavior conservative. It is not idempotent.
 - Keep declines as typed results. Only gateway errors, validation failures, authentication errors, rate limits, and transport failures should throw.
 - Keep webhook verification byte-exact and constant-time.

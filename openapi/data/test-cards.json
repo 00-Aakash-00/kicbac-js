@@ -1,5 +1,5 @@
 {
-  "$comment": "Gateway test-mode credentials and cards. Sources: Kicbac-Collect-JS.pdf (test tokens), docs.nmi.com/reference/testing-methods.md.",
+  "$comment": "Gateway test-mode credentials and cards. Source: Kicbac test-mode reference (tokens, cards, AVS/CVV simulation).",
   "cards": [
     { "brand": "visa", "number": "4111111111111111", "expiry": "1029", "cvv": "999" },
     { "brand": "mastercard", "number": "5431111111111111", "expiry": "1029", "cvv": "999" },

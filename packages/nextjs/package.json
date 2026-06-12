@@ -16,9 +16,7 @@
   "types": "./dist/index.d.cts",
   "typesVersions": {
     "*": {
-      "server": [
-        "./dist/server/index.d.cts"
-      ]
+      "server": ["./dist/server/index.d.cts"]
     }
   },
   "exports": {
@@ -69,14 +67,5 @@
     "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/00-Aakash-00/kicbac-js.git",
-    "directory": "packages/nextjs"
-  },
-  "bugs": {
-    "url": "https://github.com/00-Aakash-00/kicbac-js/issues"
-  },
-  "homepage": "https://github.com/00-Aakash-00/kicbac-js/tree/main/packages/nextjs#readme"
+  }
 }

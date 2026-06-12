@@ -9,9 +9,9 @@ npm install kicbac
 pnpm add kicbac
 ```
 
-## Quickstart: charge a Collect.js payment token
+## Quickstart: charge a Kicbac.js payment token
 
-Tokenize card data in the browser with Collect.js (never post raw card
+Tokenize card data in the browser with Kicbac.js (never post raw card
 numbers from your server), then charge the single-use token:
 
 ```ts
@@ -22,7 +22,7 @@ const kicbac = new Kicbac(); // reads process.env.KICBAC_SECURITY_KEY
 
 const result = await kicbac.transactions.sale({
   amount: "49.99", // money is always a string
-  paymentToken: token, // from Collect.js on your frontend
+  paymentToken: token, // from Kicbac.js on your frontend
   orderId: "order-1042",
   billing: { firstName: "Jess", lastName: "Jones", zip: "12345" },
 });

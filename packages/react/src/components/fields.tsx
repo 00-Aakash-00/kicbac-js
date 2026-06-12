@@ -92,15 +92,15 @@ function createFieldComponent(field: KicbacFieldName, componentName: string) {
   return FieldComponent;
 }
 
-/** Collect.js card number iframe in a styled, stateful wrapper. */
+/** Kicbac.js card number iframe in a styled, stateful wrapper. */
 export const CardNumberField = createFieldComponent("ccnumber", "CardNumberField");
-/** Collect.js card expiration iframe. */
+/** Kicbac.js card expiration iframe. */
 export const CardExpiryField = createFieldComponent("ccexp", "CardExpiryField");
-/** Collect.js CVV iframe. */
+/** Kicbac.js CVV iframe. */
 export const CardCvvField = createFieldComponent("cvv", "CardCvvField");
-/** Collect.js checking account number iframe (ACH). */
+/** Kicbac.js checking account number iframe (ACH). */
 export const BankAccountField = createFieldComponent("checkaccount", "BankAccountField");
-/** Collect.js routing number iframe (ACH). */
+/** Kicbac.js routing number iframe (ACH). */
 export const BankRoutingField = createFieldComponent("checkaba", "BankRoutingField");
-/** Collect.js account holder name iframe (ACH). */
+/** Kicbac.js account holder name iframe (ACH). */
 export const BankAccountNameField = createFieldComponent("checkname", "BankAccountNameField");

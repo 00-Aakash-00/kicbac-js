@@ -1,7 +1,7 @@
 /**
  * Maps an internal load-error code to consumer-safe panel copy.
  *
- * The shopper must NEVER see developer wording (env-var names, "Collect.js",
+ * The shopper must NEVER see developer wording (env-var names, "Kicbac.js",
  * stack traces). Transient failures (the script was blocked or timed out) are
  * worth a "Try again"; configuration failures (missing/duplicate key) cannot be
  * fixed by the shopper, so they get a calm "try later" with no retry button.

@@ -76,7 +76,7 @@ describe("createFieldSession", () => {
     expect(mock.configureCalls).toHaveLength(2);
   });
 
-  it("fires onReady when Collect.js installs its fields", () => {
+  it("fires onReady when Kicbac.js installs its fields", () => {
     const onReady = vi.fn();
     const session = createSession({ onReady });
     expect(session.isReady).toBe(false);
@@ -87,7 +87,7 @@ describe("createFieldSession", () => {
 });
 
 describe("tokenize", () => {
-  it("resolves the Collect.js response", async () => {
+  it("resolves the Kicbac.js response", async () => {
     const session = createSession();
     const promise = session.tokenize();
     expect(mock.startPaymentRequestCalls).toBe(1);
@@ -111,7 +111,7 @@ describe("tokenize", () => {
     await p3;
   });
 
-  it("rejects tokenization_timeout when Collect.js fires its native timeoutCallback", async () => {
+  it("rejects tokenization_timeout when Kicbac.js fires its native timeoutCallback", async () => {
     const session = createSession();
     const promise = session.tokenize();
     const rejection = expect(promise).rejects.toMatchObject({ code: "tokenization_timeout" });
@@ -119,7 +119,7 @@ describe("tokenize", () => {
     await rejection;
   });
 
-  it("rejects tokenization_timeout from the local grace timer when Collect.js never calls back", async () => {
+  it("rejects tokenization_timeout from the local grace timer when Kicbac.js never calls back", async () => {
     vi.useFakeTimers();
     const session = createSession({ timeoutDuration: 5_000 });
     const promise = session.tokenize();
@@ -136,7 +136,7 @@ describe("tokenize", () => {
     const rejection = expect(promise).rejects.toMatchObject({ code: "cancelled" });
     session.destroy();
     await rejection;
-    // Late Collect.js callback after destroy must be dropped silently.
+    // Late Kicbac.js callback after destroy must be dropped silently.
     expect(() => mock.resolveToken()).not.toThrow();
   });
 
@@ -182,7 +182,7 @@ describe("field state machine", () => {
     expect(snapshots.length).toBeGreaterThan(0);
   });
 
-  it("normalizes the ccnum alias reported by Collect.js to ccnumber", () => {
+  it("normalizes the ccnum alias reported by Kicbac.js to ccnumber", () => {
     const session = createSession();
     mock.fireFieldsAvailable();
     mock.fireValidation("ccnum", false, "Bad card");

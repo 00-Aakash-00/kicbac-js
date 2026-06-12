@@ -41,7 +41,7 @@ function buildClient(key: string): KicbacClient {
   if (!collect) {
     throw new KicbacLoadError(
       "collectjs_missing",
-      "Collect.js loaded but window.CollectJS is not defined.",
+      "Kicbac.js loaded but window.CollectJS is not defined.",
     );
   }
   return {
@@ -95,7 +95,7 @@ function injectAndLoad(key: string, options?: LoadKicbacOptions): Promise<Kicbac
         reject(
           new KicbacLoadError(
             "script_timeout",
-            `Timed out after ${SCRIPT_TIMEOUT_MS / 1000}s waiting for Collect.js to load. ` +
+            `Timed out after ${SCRIPT_TIMEOUT_MS / 1000}s waiting for Kicbac.js to load. ` +
               "Check your network connection and that your Content-Security-Policy allows " +
               "the Kicbac gateway domain.",
           ),
@@ -112,7 +112,7 @@ function injectAndLoad(key: string, options?: LoadKicbacOptions): Promise<Kicbac
         () =>
           new KicbacLoadError(
             "collectjs_missing",
-            "Found an existing Collect.js script tag, but window.CollectJS never appeared. " +
+            "Found an existing Kicbac.js script tag, but window.CollectJS never appeared. " +
               "Verify the script URL and tokenization key.",
           ),
       ).then(
@@ -136,8 +136,9 @@ function injectAndLoad(key: string, options?: LoadKicbacOptions): Promise<Kicbac
         () =>
           new KicbacLoadError(
             "collectjs_missing",
-            "The Collect.js script loaded but window.CollectJS never appeared. The script " +
-              "URL may point at the wrong resource.",
+            "The Kicbac.js script loaded but did not initialize. This usually means an invalid " +
+              "tokenization key — confirm NEXT_PUBLIC_KICBAC_TOKENIZATION_KEY / " +
+              "VITE_KICBAC_TOKENIZATION_KEY is your public tokenization key from the Kicbac dashboard.",
           ),
       ).then(
         (client) => settle(() => resolve(client)),
@@ -150,7 +151,7 @@ function injectAndLoad(key: string, options?: LoadKicbacOptions): Promise<Kicbac
         reject(
           new KicbacLoadError(
             "script_load_failed",
-            "Failed to load the Collect.js script from the Kicbac gateway. Common causes: " +
+            "Failed to load the Kicbac.js script from the Kicbac gateway. Common causes: " +
               "no network connection; a Content-Security-Policy missing script-src/frame-src " +
               "for the gateway domain (kicbac.transactiongateway.com); or an ad blocker / " +
               "privacy extension blocking the request.",
@@ -164,12 +165,12 @@ function injectAndLoad(key: string, options?: LoadKicbacOptions): Promise<Kicbac
 }
 
 /**
- * Load Collect.js once and resolve a typed Kicbac client.
+ * Load Kicbac.js once and resolve a typed Kicbac client.
  *
  * - SSR-safe: resolves `null` when `window` is undefined.
  * - Deduped: concurrent/subsequent calls with the same key share one promise.
  * - A different key while a load is cached rejects with `key_mismatch`
- *   (Collect.js supports one tokenization key per page).
+ *   (Kicbac.js supports one tokenization key per page).
  * - The script is injected exactly once, so `scriptUrl`/`nonce` from the
  *   FIRST call bind. A later call passing a different `scriptUrl` rejects with
  *   `key_mismatch` rather than silently ignoring it.
@@ -191,7 +192,7 @@ export function loadKicbac(
       return Promise.reject(
         new KicbacLoadError(
           "key_mismatch",
-          "Collect.js was already loaded with a different tokenization key. Only one " +
+          "Kicbac.js was already loaded with a different tokenization key. Only one " +
             "tokenization key can be used per page.",
         ),
       );
@@ -200,7 +201,7 @@ export function loadKicbac(
       return Promise.reject(
         new KicbacLoadError(
           "key_mismatch",
-          "Collect.js was already loaded from a different scriptUrl. The script is loaded " +
+          "Kicbac.js was already loaded from a different scriptUrl. The script is loaded " +
             "once per page; pass the same scriptUrl (or none) to every loadKicbac() call.",
         ),
       );
@@ -213,7 +214,7 @@ export function loadKicbac(
     return Promise.reject(
       new KicbacLoadError(
         "key_mismatch",
-        "A Collect.js script tag with a different data-tokenization-key already exists " +
+        "A Kicbac.js script tag with a different data-tokenization-key already exists " +
           "on this page. Remove it or pass the same key to loadKicbac().",
       ),
     );

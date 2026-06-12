@@ -11,7 +11,7 @@ import type {
  * (enforced before the request is sent).
  */
 export interface PaymentMethodFields {
-  /** Single-use Collect.js token — the recommended method. */
+  /** Single-use Kicbac.js token — the recommended method. */
   paymentToken?: string;
   /** Keyed card entry (PCI scope applies; prefer `paymentToken`). */
   card?: CardDetails;

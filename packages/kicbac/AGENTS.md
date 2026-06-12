@@ -41,8 +41,8 @@ covers every entry automatically).
 - Declines (`response=2`) are `{ ok: false }` results, never exceptions;
   `response=3` throws from the `GatewayError` taxonomy (`src/errors.ts`).
 - Money values are strings (`"49.99"`); validation lives in `src/validate.ts`.
-- Gateway param names are irregular (`ccnumber`, `orderid`,
-  `shipping_firstname`, `dup_seconds`, ...). Verify against `openapi/` and
-  public gateway docs before adding mappings.
+- Gateway param names come verbatim from `../Kicbac_API_Docs/*.pdf` — verify
+  against the PDFs before adding mappings (they are irregular: `ccnumber`,
+  `orderid`, `shipping_firstname`, `dup_seconds`, ...).
 - `plans` has no delete method on purpose: the gateway has no `delete_plan`
   action.
